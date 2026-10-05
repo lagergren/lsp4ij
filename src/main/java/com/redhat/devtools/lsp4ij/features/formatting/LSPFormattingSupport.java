@@ -70,7 +70,9 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
         }
         try {
             List<? extends TextEdit> edits = formatFuture != null ? formatFuture.getNow(null) : null;
-            String formatted = edits != null ? applyEdits(editor.getDocument(), edits) : formattingRequest.getDocumentText();
+            // Save and closed-file formatting need not have an editor. The captured document
+            // also remains the request's target if its editor closes while the server replies.
+            String formatted = edits != null ? applyEdits(document, edits) : formattingRequest.getDocumentText();
             formattingRequest.onTextReady(formatted);
         } catch (Exception e) {
             handleError(formattingRequest, e);
