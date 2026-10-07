@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.redhat.devtools.lsp4ij.DocumentConnectionScope;
 import com.redhat.devtools.lsp4ij.LSPIJUtils;
 import com.redhat.devtools.lsp4ij.LanguageServerItem;
 import com.redhat.devtools.lsp4ij.LanguageServiceAccessor;
@@ -99,14 +100,17 @@ public class ClosedDocumentFormattingTest extends LSPCodeInsightFixtureTestCase 
         assertEquals(range != null, service.rangeFormatting);
         assertEquals("Formatting returns text for the platform to apply", original, document.getText());
 
-        var connection = wrapper.getOpenedDocument(wrapper.toUri(source));
+        PlatformTestUtil.waitWithEventsDispatching("save formatting must release its closed buffer",
+                () -> wrapper.getOpenedDocument(wrapper.toUri(source)) == null, 5);
+        assertEquals("Only the other persistent document remains", 1, wrapper.getOpenedDocuments().size());
         int openedCount = service.openedCount.get();
         var repeated = new FormattingResult(original, new CompletableFuture<>());
         new LSPFormattingSupport(file).format(document, file, null, range, repeated);
         assertEquals("const value = 1;", repeated.result().get(5, TimeUnit.SECONDS));
-        assertSame(connection, wrapper.getOpenedDocument(wrapper.toUri(source)));
-        assertEquals("Repeated formatting must reuse the existing connection", openedCount, service.openedCount.get());
-        assertEquals(2, wrapper.getOpenedDocuments().size());
+        PlatformTestUtil.waitWithEventsDispatching("repeated formatting must also release its connection",
+                () -> wrapper.getOpenedDocument(wrapper.toUri(source)) == null, 5);
+        assertEquals(openedCount + 1, service.openedCount.get());
+        assertEquals(1, wrapper.getOpenedDocuments().size());
     }
 
     public void testChangedBufferRejectsOldFormattingReply() throws Exception {
@@ -187,7 +191,7 @@ public class ClosedDocumentFormattingTest extends LSPCodeInsightFixtureTestCase 
         var request = new FormattingResult(original, new CompletableFuture<>());
         var support = new LSPFormattingSupport(file) {
             @Override
-            CompletableFuture<List<LanguageServerItem>> findFormattingServers(PsiFile file, TextRange range) {
+            CompletableFuture<List<LanguageServerItem>> findFormattingServers(PsiFile file, TextRange range, DocumentConnectionScope connections) {
                 // Cancel after lookup starts but before its future is registered with the request.
                 cancel();
                 return lookup;

@@ -17,9 +17,11 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.redhat.devtools.lsp4ij.DocumentConnectionScope;
 import com.redhat.devtools.lsp4ij.LSPIJUtils;
 import com.redhat.devtools.lsp4ij.LSPRequestConstants;
 import com.redhat.devtools.lsp4ij.LanguageServerItem;
+import com.redhat.devtools.lsp4ij.LanguageServiceAccessor;
 import com.redhat.devtools.lsp4ij.client.features.FileUriSupport;
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures;
 import com.redhat.devtools.lsp4ij.features.AbstractLSPDocumentFeatureSupport;
@@ -64,12 +66,12 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
         if (previous != null) {
             previous.cancel();
         }
-        try {
+        try (var connections = new DocumentConnectionScope()) {
             if (!isCurrent(document, file, original, modificationStamp)) {
                 formattingRequest.onTextReady(null);
                 return;
             }
-            LanguageServerItem formattingServer = findFormattingServer(file, textRange, cancellation);
+            LanguageServerItem formattingServer = findFormattingServer(file, textRange, cancellation, connections);
             if (formattingServer == null || formattingCancellation.get() != cancellation
                     || !isCurrent(document, file, original, modificationStamp)) {
                 formattingRequest.onTextReady(null);
@@ -189,13 +191,15 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
      * @param file      the PSI file for which formatting is requested.
      * @param textRange the range to format, or {@code null} to format the entire document.
      * @param cancellation cancellation for both the server connection and formatting request.
+     * @param connections temporary connection ownership for this formatting operation.
      * @return a {@link LanguageServerItem} supporting formatting, or {@code null} if none is available.
      */
     private @Nullable LanguageServerItem findFormattingServer(@NotNull PsiFile file,
                                                               @Nullable TextRange textRange,
-                                                              @NotNull CancellationSupport cancellation) {
+                                                              @NotNull CancellationSupport cancellation,
+                                                              @NotNull DocumentConnectionScope connections) {
         boolean isRangeFormatting = textRange != null;
-        var servers = trackFormattingFuture(findFormattingServers(file, textRange), cancellation);
+        var servers = trackFormattingFuture(findFormattingServers(file, textRange, connections), cancellation);
         awaitWithCheckCanceled(servers);
         LanguageServerItem selected = null;
         for (var server : servers.join()) {
@@ -210,11 +214,12 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
 
     /** Connects formatting candidates before applying formatter preferences. */
     CompletableFuture<List<LanguageServerItem>> findFormattingServers(@NotNull PsiFile file,
-                                                                     @Nullable TextRange textRange) {
-        return getLanguageServers(file,
+                                                                     @Nullable TextRange textRange,
+                                                                     @NotNull DocumentConnectionScope connections) {
+        return LanguageServiceAccessor.getInstance(file.getProject()).getLanguageServersForScope(file,
                 features -> features.getFormattingFeature().isEnabled(file),
                 features -> features.getFormattingFeature().isFormattingSupported(file)
-                        || (textRange != null && features.getFormattingFeature().isRangeFormattingSupported(file)));
+                        || (textRange != null && features.getFormattingFeature().isRangeFormattingSupported(file)), connections);
     }
 
     private @NotNull DocumentFormattingParams createDocumentFormattingParams(@NotNull FormattingOptions options,
