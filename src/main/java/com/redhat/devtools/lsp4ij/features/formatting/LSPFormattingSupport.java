@@ -13,22 +13,30 @@ package com.redhat.devtools.lsp4ij.features.formatting;
 import com.intellij.formatting.service.AsyncFormattingRequest;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
-import com.redhat.devtools.lsp4ij.*;
+import com.redhat.devtools.lsp4ij.LSPIJUtils;
+import com.redhat.devtools.lsp4ij.LSPRequestConstants;
+import com.redhat.devtools.lsp4ij.LanguageServerItem;
 import com.redhat.devtools.lsp4ij.client.features.FileUriSupport;
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures;
 import com.redhat.devtools.lsp4ij.features.AbstractLSPDocumentFeatureSupport;
 import com.redhat.devtools.lsp4ij.internal.CancellationSupport;
-import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.DocumentFormattingParams;
+import org.eclipse.lsp4j.DocumentRangeFormattingParams;
+import org.eclipse.lsp4j.FormattingOptions;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TextEdit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.redhat.devtools.lsp4ij.LSPIJUtils.applyEdits;
 import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.awaitWithCheckCanceled;
@@ -37,6 +45,8 @@ import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.awaitWithCh
  * LSP formatting and range formatting support.
  */
 public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPFormattingParams, List<? extends TextEdit>> {
+
+    private final AtomicReference<CancellationSupport> formattingCancellation = new AtomicReference<>();
 
     public LSPFormattingSupport(@NotNull PsiFile file) {
         super(file);
@@ -47,43 +57,90 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
                        @Nullable Editor editor,
                        @Nullable TextRange textRange,
                        @NotNull AsyncFormattingRequest formattingRequest) {
-        LanguageServerItem formattingServer = findFormattingServer(file, textRange);
-        if (formattingServer == null)  {
-            return;
+        String original = formattingRequest.getDocumentText();
+        long modificationStamp = document.getModificationStamp();
+        var cancellation = new CancellationSupport();
+        var previous = formattingCancellation.getAndSet(cancellation);
+        if (previous != null) {
+            previous.cancel();
         }
-        // We are currently in a ReadAction; this call must occur here because it may access PSI or CodeStyleSettings.
-        var formattingOptions = formattingServer.getClientFeatures().getFormattingFeature().getFormattingOptions(file, editor);
-        LSPFormattingParams params = new LSPFormattingParams(textRange, document, formattingServer, formattingOptions);
-        CompletableFuture<List<? extends TextEdit>> formatFuture = this.getFeatureData(params);
         try {
+            if (!isCurrent(document, file, original, modificationStamp)) {
+                formattingRequest.onTextReady(null);
+                return;
+            }
+            LanguageServerItem formattingServer = findFormattingServer(file, textRange, cancellation);
+            if (formattingServer == null || formattingCancellation.get() != cancellation
+                    || !isCurrent(document, file, original, modificationStamp)) {
+                formattingRequest.onTextReady(null);
+                return;
+            }
+            // We are currently in a ReadAction; this call must occur here because it may access PSI or CodeStyleSettings.
+            var formattingOptions = formattingServer.getClientFeatures().getFormattingFeature().getFormattingOptions(file, editor);
+            LSPFormattingParams params = new LSPFormattingParams(textRange, document, formattingServer, formattingOptions);
+            CompletableFuture<List<? extends TextEdit>> formatFuture = trackFormattingFuture(
+                    getFormatting(params, cancellation), cancellation);
             awaitWithCheckCanceled(formatFuture);
+            var wrapper = formattingServer.getServerWrapper();
+            if (formattingCancellation.get() != cancellation
+                    || !isCurrent(document, file, original, modificationStamp)
+                    || !wrapper.isActive() || wrapper.isDisposed()
+                    || wrapper.getLanguageServer() != formattingServer.getServer()) {
+                formattingRequest.onTextReady(null);
+                return;
+            }
+            List<? extends TextEdit> edits = formatFuture.getNow(null);
+            // LSP ranges belong to the request's text. Never use a newer buffer, or require
+            // an editor which may have closed while the request was running.
+            String formatted = edits != null
+                    ? applyEdits(EditorFactory.getInstance().createDocument(original), edits)
+                    : null;
+            formattingRequest.onTextReady(formatted);
         } catch (ProcessCanceledException e) {
+            cancellation.cancel();
             throw e;
         } catch (CancellationException e) {
-            // cancel the LSP requests textDocument/formatting / textDocument/rangeFormatting
             handleError(formattingRequest, e);
-            return;
         } catch (Exception e) {
             Throwable cause = e.getCause();
             handleError(formattingRequest, cause != null ? cause : e);
-            return;
+        } finally {
+            formattingCancellation.compareAndSet(cancellation, null);
         }
-        try {
-            List<? extends TextEdit> edits = formatFuture != null ? formatFuture.getNow(null) : null;
-            // Save and closed-file formatting need not have an editor. The captured document
-            // also remains the request's target if its editor closes while the server replies.
-            String formatted = edits != null ? applyEdits(document, edits) : formattingRequest.getDocumentText();
-            formattingRequest.onTextReady(formatted);
-        } catch (Exception e) {
-            handleError(formattingRequest, e);
+    }
+
+    @Override
+    public void cancel() {
+        var cancellation = formattingCancellation.getAndSet(null);
+        if (cancellation != null) {
+            cancellation.cancel();
         }
+        super.cancel();
+    }
+
+    private <T> CompletableFuture<T> trackFormattingFuture(@NotNull CompletableFuture<T> future,
+                                                         @NotNull CancellationSupport cancellation) {
+        cancellation.execute(future);
+        // Cancellation may race registering the new future. The atomic owner check closes
+        // that gap for both reconnect and formatting, without waiting under a lock.
+        if (formattingCancellation.get() != cancellation) {
+            CancellationSupport.cancel(future);
+            throw new CancellationException();
+        }
+        return future;
+    }
+
+    private static boolean isCurrent(@NotNull Document document, @NotNull PsiFile file,
+                                     @NotNull String original, long modificationStamp) {
+        return !file.getProject().isDisposed() && file.isValid()
+                && document.getModificationStamp() == modificationStamp && original.equals(document.getText());
     }
 
     private static void handleError(@NotNull AsyncFormattingRequest formattingRequest,
                                     @NotNull Throwable error) {
         if (error instanceof CancellationException) {
-            // Ignore the error
-            formattingRequest.onTextReady(formattingRequest.getDocumentText());
+            // Ignore the error without replacing any newer text.
+            formattingRequest.onTextReady(null);
         } else {
             formattingRequest.onError("LSP formatting error", error.getMessage() != null ? error.getMessage() : error.getClass().getName());
         }
@@ -91,7 +148,6 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
 
     @Override
     protected CompletableFuture<List<? extends TextEdit>> doLoad(LSPFormattingParams params, CancellationSupport cancellationSupport) {
-        PsiFile file = super.getFile();
         return getFormatting(params, cancellationSupport);
     }
 
@@ -125,38 +181,40 @@ public class LSPFormattingSupport extends AbstractLSPDocumentFeatureSupport<LSPF
      *   <li>{@code textDocument/rangeFormatting} or {@code textDocument/formatting} – when a range is provided.</li>
      * </ul>
      * <p>
-     * The method iterates over all language servers registered for the file's project and returns the
-     * first server that declares formatting support through its {@link LSPClientFeatures}.
+     * The method connects the current document to matching servers before selecting one through
+     * its {@link LSPClientFeatures}, preserving the formatter override and range preferences.
+     * This also sends {@code textDocument/didOpen} for a closed dirty buffer before formatting it.
      * If no suitable server is found, {@code null} is returned.
      *
      * @param file      the PSI file for which formatting is requested.
      * @param textRange the range to format, or {@code null} to format the entire document.
+     * @param cancellation cancellation for both the server connection and formatting request.
      * @return a {@link LanguageServerItem} supporting formatting, or {@code null} if none is available.
      */
-    private static @Nullable LanguageServerItem findFormattingServer(@NotNull PsiFile file,
-                                                                     @Nullable TextRange textRange) {
-        // Get the first language server which supports range formatting (if it requires) or formatting
+    private @Nullable LanguageServerItem findFormattingServer(@NotNull PsiFile file,
+                                                              @Nullable TextRange textRange,
+                                                              @NotNull CancellationSupport cancellation) {
         boolean isRangeFormatting = textRange != null;
-        Ref<LanguageServerItem> server = Ref.create(null);
-        LanguageServiceAccessor.getInstance(file.getProject()).processLanguageServers(file, ls -> {
-            var formattingFeature = ls.getClientFeatures().getFormattingFeature();
-            if (formattingFeature.isEnabled(file)) {
-                boolean overridable = formattingFeature.isExistingFormatterOverrideable(file);
-                if (!isRangeFormatting) {
-                    if ((overridable || server.isNull()) && formattingFeature.isFormattingSupported(file)) {
-                        server.set(new LanguageServerItem(ls.getLanguageServer(), ls));
-                    }
-                } else {
-                    if (formattingFeature.isFormattingSupported(file) ||
-                            formattingFeature.isRangeFormattingSupported(file)) {
-                        if (overridable || server.isNull() || !server.get().isDocumentRangeFormattingSupported()) {
-                            server.set(new LanguageServerItem(ls.getLanguageServer(), ls));
-                        }
-                    }
-                }
+        var servers = trackFormattingFuture(findFormattingServers(file, textRange), cancellation);
+        awaitWithCheckCanceled(servers);
+        LanguageServerItem selected = null;
+        for (var server : servers.join()) {
+            var formattingFeature = server.getClientFeatures().getFormattingFeature();
+            if (selected == null || formattingFeature.isExistingFormatterOverrideable(file)
+                    || (isRangeFormatting && !selected.isDocumentRangeFormattingSupported())) {
+                selected = server;
             }
-        });
-        return server.isNull() ? null : server.get();
+        }
+        return selected;
+    }
+
+    /** Connects formatting candidates before applying formatter preferences. */
+    CompletableFuture<List<LanguageServerItem>> findFormattingServers(@NotNull PsiFile file,
+                                                                     @Nullable TextRange textRange) {
+        return getLanguageServers(file,
+                features -> features.getFormattingFeature().isEnabled(file),
+                features -> features.getFormattingFeature().isFormattingSupported(file)
+                        || (textRange != null && features.getFormattingFeature().isRangeFormattingSupported(file)));
     }
 
     private @NotNull DocumentFormattingParams createDocumentFormattingParams(@NotNull FormattingOptions options,
