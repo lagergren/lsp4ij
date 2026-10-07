@@ -32,6 +32,7 @@ import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +85,7 @@ public class FileDocumentMoveTest extends LSPCodeInsightFixtureTestCase {
             context.file().rename(this, "final.foo");
         });
         PlatformTestUtil.waitWithEventsDispatching("the final URI must reconnect", reopened::isDone, 10);
-        assertEquals(context.wrapper().toUri(context.file()).toString(), reopened.join().getTextDocument().getUri());
+        assertEquals(context.wrapper().toUri(context.file()), URI.create(reopened.join().getTextDocument().getUri()));
         assertEquals("unsaved", reopened.join().getTextDocument().getText());
         assertEquals(1, context.wrapper().getOpenedDocuments().size());
     }
@@ -138,18 +139,18 @@ public class FileDocumentMoveTest extends LSPCodeInsightFixtureTestCase {
         MockLanguageServer.INSTANCE.getTextDocumentService().setDidCloseCallback(closed);
         MockLanguageServer.INSTANCE.getTextDocumentService().setDidOpenCallback(opened);
         MockLanguageServer.INSTANCE.getWorkspaceService().setDidRenameCallback(renamed);
-        String oldUri = context.wrapper().toUri(context.file()).toString();
+        URI oldUri = context.wrapper().toUri(context.file());
         operation.run();
         PlatformTestUtil.waitWithEventsDispatching("rename must deliver close, open and workspace notification",
                 () -> closed.isDone() && opened.isDone() && renamed.isDone() && closedBeforeOpen.isDone(), 10);
-        String newUri = context.wrapper().toUri(context.file()).toString();
+        URI newUri = context.wrapper().toUri(context.file());
         assertTrue("didClose must precede didOpen", closedBeforeOpen.join());
-        assertEquals(oldUri, closed.join().getTextDocument().getUri());
-        assertEquals(newUri, opened.join().getTextDocument().getUri());
+        assertEquals(oldUri, URI.create(closed.join().getTextDocument().getUri()));
+        assertEquals(newUri, URI.create(opened.join().getTextDocument().getUri()));
         assertEquals("unsaved", opened.join().getTextDocument().getText());
         assertEquals(1, renamed.join().getFiles().size());
-        assertEquals(oldUri, renamed.join().getFiles().get(0).getOldUri());
-        assertEquals(newUri, renamed.join().getFiles().get(0).getNewUri());
+        assertEquals(oldUri, URI.create(renamed.join().getFiles().get(0).getOldUri()));
+        assertEquals(newUri, URI.create(renamed.join().getFiles().get(0).getNewUri()));
         assertEquals(1, context.wrapper().getOpenedDocuments().size());
         assertNotNull(context.wrapper().getOpenedDocument(context.wrapper().toUri(context.file())));
     }
