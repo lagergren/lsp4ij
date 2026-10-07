@@ -20,8 +20,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.redhat.devtools.lsp4ij.features.files.AbstractLSPFileListener;
-import com.redhat.devtools.lsp4ij.internal.CompletableFutures;
-import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.awaitWithCheckCanceled;
 import org.eclipse.lsp4j.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -30,9 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
-
-import static com.redhat.devtools.lsp4ij.LSPIJUtils.findResourceFor;
 
 /**
  * {@code LSPFileListener} bridges IntelliJ Virtual File System (VFS) events
@@ -135,7 +130,8 @@ class LSPFileListener extends AbstractLSPFileListener {
 
     private boolean isOpenDocument(VirtualFile file) {
         return !languageServerWrapper.isDisposed() && !languageServerWrapper.getProject().isDisposed() &&
-                file.isValid() && FileEditorManager.getInstance(languageServerWrapper.getProject()).isFileOpen(file);
+                file.isValid() && (FileEditorManager.getInstance(languageServerWrapper.getProject()).isFileOpen(file) ||
+                ReadAction.compute(() -> LSPIJUtils.editorsForFile(file, languageServerWrapper.getProject()).length > 0));
     }
 
     /**
@@ -326,17 +322,10 @@ class LSPFileListener extends AbstractLSPFileListener {
         if (docIsConnected) {
             // 1. Send a textDocument/didClose for the old file name
             languageServerWrapper.disconnect(oldFileUri, false);
-            // 2. Send a textDocument/didOpen for the new file name
-            if (!languageServerWrapper.isConnectedTo(newFileUri)) {
-                VirtualFile documentFile = findResourceFor(newFileUri.toASCIIString());
-                var document = LSPIJUtils.getDocument(documentFile);
-                var didOpen = languageServerWrapper.connect(newFile,
-                        languageServerWrapper.createFileConnectionInfo(documentFile, document, true));
-                try {
-                    awaitWithCheckCanceled(didOpen);
-                } catch (CancellationException ignore) {
-                }
-            }
+            // 2. Reconnect after the VFS write action has completed. Connecting captures the
+            // document under a read action; awaiting it here deadlocks that read against this
+            // write lock. The notification queue keeps didClose ahead of the new didOpen.
+            reconnectMovedDocument(newFile);
         }
 
         // 2. Prepare file events to send workspace/didRenameFiles

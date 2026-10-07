@@ -30,10 +30,24 @@ public class MockWorkspaceService implements WorkspaceService {
 	private CompletableFuture<ExecuteCommandParams> executedCommand = new CompletableFuture<>();
 	private List<DidChangeWorkspaceFoldersParams> workspaceFoldersEvents = new ArrayList<>();
     private WorkspaceEdit willRename;
+    private volatile CompletableFuture<RenameFilesParams> didRenameCallback;
 
 	public <U> MockWorkspaceService(Function<U, CompletableFuture<U>> futureFactory) {
 		this._futureFactory = futureFactory;
 	}
+
+    public void setDidRenameCallback(CompletableFuture<RenameFilesParams> callback) {
+        didRenameCallback = callback;
+    }
+
+    @Override
+    public void didRenameFiles(RenameFilesParams params) {
+        var callback = didRenameCallback;
+        if (callback != null) {
+            didRenameCallback = null;
+            callback.complete(params);
+        }
+    }
 
     public void setWillRename(WorkspaceEdit willRename) {
         this.willRename = willRename;
