@@ -193,7 +193,8 @@ class LSPRenameRefactoringDialog extends RefactoringDialog {
             } else {
                 // Apply the rename from the LSP WorkspaceEdit list
                 WriteCommandAction.runWriteCommandAction(psiFile.getProject(), () -> {
-                    // Validate every response before applying any part of the rename.
+                    // Multiple servers can contribute to one rename. Validate every response
+                    // before changing any document or external reference, under the same write lock.
                     for (var workspaceEditData : workspaceEdits) {
                         String reason = workspaceEditData.snapshot().validate(workspaceEditData.edit());
                         if (reason != null) {

@@ -30,8 +30,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Exercises workspace/applyEdit through the client, including refusal before any mutation.
+ * Requests queue their writes on the EDT; the tests change state before dispatching that queue.
+ * The waits are hang guards, not assertions about elapsed time or scheduling speed.
  */
 public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
+
     public WorkspaceEditValidationTest() {
         super("*.foo");
     }
@@ -65,6 +68,10 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
         return context.wrapper().getOpenedDocument(URI.create(context.uri())).getSynchronizer().getVersion();
     }
 
+    private static CompletableFuture<ApplyWorkspaceEditResponse> requestEdit(Context context, WorkspaceEdit edit) {
+        return context.client().applyEdit(new ApplyWorkspaceEditParams(edit));
+    }
+
     private ApplyWorkspaceEditResponse await(CompletableFuture<ApplyWorkspaceEditResponse> future) {
         PlatformTestUtil.waitWithEventsDispatching("workspace edit must complete", future::isDone, 5);
         return future.join();
@@ -72,7 +79,7 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
 
     public void testCurrentVersionIsAppliedAndAcknowledged() throws Exception {
         var context = open();
-        var response = await(context.client().applyEdit(new ApplyWorkspaceEditParams(versioned(context.uri(), version(context)))));
+        var response = await(requestEdit(context, versioned(context.uri(), version(context))));
         assertTrue(response.isApplied());
         assertEquals("after", myFixture.getEditor().getDocument().getText());
     }
@@ -83,11 +90,12 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
         WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () ->
                 myFixture.getEditor().getDocument().setText("new typing"));
         var other = myFixture.addFileToProject("other.foo", "before");
+        // Put the valid target first: refusing the stale second target must also leave this one alone.
         var first = new TextDocumentEdit(new VersionedTextDocumentIdentifier(
                 context.wrapper().toUri(other.getVirtualFile()).toString(), null), List.of(Either.forLeft(replacement())));
         var second = versioned(context.uri(), originalVersion).getDocumentChanges().get(0);
         var edit = new WorkspaceEdit(List.of(Either.forLeft(first), second));
-        var response = await(context.client().applyEdit(new ApplyWorkspaceEditParams(edit)));
+        var response = await(requestEdit(context, edit));
         assertFalse(response.isApplied());
         assertNotNull(response.getFailureReason());
         assertEquals("before", other.getText());
@@ -97,8 +105,9 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
     public void testUnversionedQueuedReplyCannotOverwriteNewTyping() throws Exception {
         var context = open();
         var edit = new WorkspaceEdit(Map.of(context.uri(), List.of(replacement())));
-        var future = context.client().applyEdit(new ApplyWorkspaceEditParams(edit));
-        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> myFixture.getEditor().getDocument().setText("new typing"));
+        var future = requestEdit(context, edit);
+        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () ->
+                myFixture.getEditor().getDocument().setText("new typing"));
         assertFalse(await(future).isApplied());
         assertEquals("new typing", myFixture.getEditor().getDocument().getText());
     }
@@ -107,7 +116,7 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
         var context = open();
         var edit = versioned(context.uri(), version(context));
         context.wrapper().disconnect(URI.create(context.uri()), false);
-        assertFalse(await(context.client().applyEdit(new ApplyWorkspaceEditParams(edit))).isApplied());
+        assertFalse(await(requestEdit(context, edit)).isApplied());
         assertEquals("before", myFixture.getEditor().getDocument().getText());
     }
 
@@ -118,11 +127,9 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
         LanguageServiceAccessor.getInstance(myFixture.getProject()).getLanguageServers(myFixture.getFile(), null, null)
                 .get(5, TimeUnit.SECONDS);
         assertTrue(version(context) > previousVersion);
-        assertFalse(await(context.client().applyEdit(new ApplyWorkspaceEditParams(
-                versioned(context.uri(), previousVersion)))).isApplied());
+        assertFalse(await(requestEdit(context, versioned(context.uri(), previousVersion))).isApplied());
         assertEquals("before", myFixture.getEditor().getDocument().getText());
-        assertTrue(await(context.client().applyEdit(new ApplyWorkspaceEditParams(
-                versioned(context.uri(), version(context))))).isApplied());
+        assertTrue(await(requestEdit(context, versioned(context.uri(), version(context)))).isApplied());
         assertEquals("after", myFixture.getEditor().getDocument().getText());
     }
 
@@ -131,30 +138,29 @@ public class WorkspaceEditValidationTest extends LSPCodeInsightFixtureTestCase {
         var file = myFixture.getFile().getVirtualFile();
         var document = myFixture.getEditor().getDocument();
         context.wrapper().disconnect(URI.create(context.uri()), false);
+        // Model typing between the initial text capture and asynchronous connection setup.
         var connectionInfo = context.wrapper().createFileConnectionInfo(file, document, true);
         WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> document.setText("new typing"));
         context.wrapper().connect(file, connectionInfo).get(5, TimeUnit.SECONDS);
 
-        assertFalse(await(context.client().applyEdit(new ApplyWorkspaceEditParams(
-                versioned(context.uri(), version(context))))).isApplied());
+        assertFalse(await(requestEdit(context, versioned(context.uri(), version(context)))).isApplied());
         assertEquals("new typing", document.getText());
     }
 
     public void testRetiredClientCannotApplyAnUnsolicitedEdit() throws Exception {
         var context = open();
         context.client().dispose();
-        assertFalse(await(context.client().applyEdit(new ApplyWorkspaceEditParams(
-                new WorkspaceEdit(Map.of(context.uri(), List.of(replacement())))))).isApplied());
+        var edit = new WorkspaceEdit(Map.of(context.uri(), List.of(replacement())));
+        assertFalse(await(requestEdit(context, edit)).isApplied());
         assertEquals("before", myFixture.getEditor().getDocument().getText());
     }
 
     public void testQueuedEditIsRefusedIfItsClientRetires() throws Exception {
         var context = open();
-        var pending = context.client().applyEdit(new ApplyWorkspaceEditParams(
-                new WorkspaceEdit(Map.of(context.uri(), List.of(replacement())))));
+        var edit = new WorkspaceEdit(Map.of(context.uri(), List.of(replacement())));
+        var pending = requestEdit(context, edit);
         context.client().dispose();
         assertFalse(await(pending).isApplied());
         assertEquals("before", myFixture.getEditor().getDocument().getText());
     }
-
 }

@@ -74,6 +74,8 @@ public class LSPRenameSupport extends AbstractLSPDocumentFeatureSupport<LSPRenam
                                                                            @NotNull CancellationSupport cancellationSupport) {
         // Update textDocument Uri with custom file Uri if needed
         updateTextDocumentUri(params.getTextDocument(), file, languageServer);
+        // Capture before dispatch, not when the response arrives: typing during the request
+        // must invalidate edits for every affected document, including other open files.
         var snapshot = WorkspaceEditSnapshot.capture(languageServer);
         return cancellationSupport.execute(languageServer
                                 .getTextDocumentService()

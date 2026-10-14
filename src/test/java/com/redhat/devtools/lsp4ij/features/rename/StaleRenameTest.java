@@ -36,6 +36,7 @@ public class StaleRenameTest extends LSPCodeInsightFixtureTestCase {
         var servers = LanguageServiceAccessor.getInstance(myFixture.getProject())
                 .getLanguageServers(file, null, null).get(5, TimeUnit.SECONDS);
         String uri = servers.get(0).getServerWrapper().toUri(file.getVirtualFile()).toString();
+        // These gates establish request -> typing -> response without sleeps or timed callbacks.
         var requested = new CompletableFuture<Void>();
         var reply = new CompletableFuture<WorkspaceEdit>();
         MockLanguageServer.INSTANCE.setRenameProcessor(params -> {
@@ -61,6 +62,7 @@ public class StaleRenameTest extends LSPCodeInsightFixtureTestCase {
                     assertNotNull(data.snapshot().validate(data.edit())));
             assertEquals("new typing", myFixture.getEditor().getDocument().getText());
         } finally {
+            // Release the mock server even if an assertion fails before the reply is supplied.
             reply.cancel(false);
             support.cancel();
         }

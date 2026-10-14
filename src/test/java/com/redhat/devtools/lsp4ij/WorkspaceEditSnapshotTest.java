@@ -28,7 +28,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Keeps request-time state separate from a delayed response without racing test threads.
+ * Exercises document and connection changes between capture and application.
+ * Each transition is explicit; the waits only guard against hangs.
  */
 public class WorkspaceEditSnapshotTest extends LSPCodeInsightFixtureTestCase {
 

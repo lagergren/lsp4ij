@@ -56,6 +56,9 @@ public class DocumentContentSynchronizer implements DocumentListener, Disposable
     private final long documentModificationStamp;
     private final @Nullable String languageId;
 
+    // Update the LSP version and its matching editor stamp together under changeEvents.
+    // The stamp is -1 until the text associated with a version is known. Volatile also
+    // supports callers that only need getVersion(), without inspecting the pending changes.
     private volatile int version = 0;
     private long synchronizedModificationStamp = -1;
     private final List<TextDocumentContentChangeEvent> changeEvents;
@@ -65,6 +68,11 @@ public class DocumentContentSynchronizer implements DocumentListener, Disposable
     private volatile Alarm debouncePullDiagnosticsAlarm = null;
     private boolean diagnosticNotPulledOnDidOpen;
 
+    /**
+     * Compatibility constructor for callers without a stamp for the supplied text.
+     * If documentText is supplied, versioned edits cannot be accepted until a didChange
+     * establishes which editor state the protocol version represents.
+     */
     public DocumentContentSynchronizer(@NotNull LanguageServerWrapper languageServerWrapper,
                                        @NotNull String fileUri,
                                        @NotNull VirtualFile file,
@@ -215,6 +223,7 @@ public class DocumentContentSynchronizer implements DocumentListener, Disposable
             changeEvents.clear();
             barrier = new CompletableFuture<>();
             lastDidChangeFuture = barrier;
+            // Record the state represented by this batch before another flush can advance it.
             version = languageServerWrapper.nextDocumentVersion(fileUri);
             this.version = version;
             synchronizedModificationStamp = document.getModificationStamp();
@@ -354,6 +363,9 @@ public class DocumentContentSynchronizer implements DocumentListener, Disposable
 
     /**
      * Returns whether the given version describes the current buffer, with no pending changes.
+     * The caller holds read or write access to keep the document stable. Checking the version,
+     * stamp and event queue under the same monitor prevents mixing states from different flushes.
+     * This describes the text assigned to a notification, not an acknowledgement from the server.
      */
     boolean isCurrentVersion(int expectedVersion) {
         synchronized (changeEvents) {

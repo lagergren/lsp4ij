@@ -128,7 +128,10 @@ public class LanguageClientImpl implements LanguageClient, Disposable {
 
     @Override
     public CompletableFuture<ApplyWorkspaceEditResponse> applyEdit(ApplyWorkspaceEditParams params) {
-        return WorkspaceEditSnapshot.capture(wrapper, () -> !isDisposed()).apply(params.getEdit(), params.getLabel());
+        // Capture before queuing the write, and reject the request if this client retires meanwhile.
+        // For an unversioned server-initiated edit, receipt is the earliest state we can capture.
+        var snapshot = WorkspaceEditSnapshot.capture(wrapper, () -> !isDisposed());
+        return snapshot.apply(params.getEdit(), params.getLabel());
     }
 
     @Override
