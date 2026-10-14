@@ -13,7 +13,6 @@ package com.redhat.devtools.lsp4ij.client;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -52,7 +51,7 @@ public class LanguageClientImpl implements LanguageClient, Disposable {
 
     private @Nullable LanguageServer server;
     private @NotNull LanguageServerWrapper wrapper;
-    private boolean disposed;
+    private volatile boolean disposed;
 
     private Runnable didChangeConfigurationListener;
 
@@ -129,12 +128,7 @@ public class LanguageClientImpl implements LanguageClient, Disposable {
 
     @Override
     public CompletableFuture<ApplyWorkspaceEditResponse> applyEdit(ApplyWorkspaceEditParams params) {
-        CompletableFuture<ApplyWorkspaceEditResponse> future = new CompletableFuture<>();
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-            LSPIJUtils.applyWorkspaceEdit(params.getEdit());
-            future.complete(new ApplyWorkspaceEditResponse(true));
-        });
-        return future;
+        return WorkspaceEditSnapshot.capture(wrapper, () -> !isDisposed()).apply(params.getEdit(), params.getLabel());
     }
 
     @Override

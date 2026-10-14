@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -102,6 +103,8 @@ public class LanguageServerWrapper implements Disposable {
     protected final Map<URI /* file Uri */, ClosedDocument> closedDocuments;
     // Lock object to prevent deadlock when accessing both openedDocuments and closedDocuments
     private final Object documentsLock = new Object();
+    // Versions must not be reused when a document is closed and reopened on the same connection.
+    private final Map<String, Integer> documentVersions = new ConcurrentHashMap<>();
     @Nullable
     protected final URI initialPath;
     protected final InitializeParams initParams = new InitializeParams();
@@ -123,7 +126,7 @@ public class LanguageServerWrapper implements Disposable {
     private Future<?> launcherFuture;
     private int numberOfRestartAttempts;
     private @Nullable CompletableFuture<Void> initializeFuture;
-    private LanguageServer languageServer;
+    private volatile LanguageServer languageServer;
     private LanguageClientImpl languageClient;
     private ServerCapabilities serverCapabilities;
     private volatile @Nullable Alarm stopAlarm = null;
@@ -790,7 +793,7 @@ public class LanguageServerWrapper implements Disposable {
                     shouldNotify = workspaceFolderNotificationManager.markFolderAsNotified(folderToNotify);
                 }
 
-                DocumentContentSynchronizer synchronizer = createDocumentContentSynchronizer(toUriString(fileUri), file, document, fileConnectionInfo.documentText(), fileConnectionInfo.languageId());
+                DocumentContentSynchronizer synchronizer = createDocumentContentSynchronizer(toUriString(fileUri), file, document, fileConnectionInfo.documentText(), fileConnectionInfo.documentModificationStamp(), fileConnectionInfo.languageId());
                 // Synchronizer usually is disposed when document editor is closed.
                 // But in case of closing the project, it does not close all editors,
                 // so to ensure synchronizer is disposed we also register it here
@@ -846,13 +849,21 @@ public class LanguageServerWrapper implements Disposable {
                 .thenApplyAsync(theVoid -> languageServer);
     }
 
+    /**
+     * Allocates a document version that remains unique across close and reopen.
+     */
+    int nextDocumentVersion(@NotNull String uri) {
+        return documentVersions.merge(uri, 1, Math::addExact);
+    }
+
     @NotNull
     private DocumentContentSynchronizer createDocumentContentSynchronizer(@NotNull String fileUri,
                                                                           @NotNull VirtualFile file,
                                                                           @NotNull Document document,
                                                                           @Nullable String documentText,
+                                                                          long documentModificationStamp,
                                                                           @Nullable String languageId) {
-        return new DocumentContentSynchronizer(this, fileUri, file, document, documentText, languageId);
+        return new DocumentContentSynchronizer(this, fileUri, file, document, documentText, documentModificationStamp, languageId);
     }
 
     public @NotNull TextDocumentSyncOptions getSyncOptions() {
@@ -1723,6 +1734,7 @@ public class LanguageServerWrapper implements Disposable {
                 while (!this.openedDocuments.isEmpty()) {
                     disconnect(this.openedDocuments.keySet().iterator().next(), false);
                 }
+                documentVersions.clear();
                 if (!closedDocuments.isEmpty()) {
                     Set<URI> fileUris = new HashSet<>(closedDocuments.keySet());
                     closedDocuments.clear();
@@ -1824,15 +1836,22 @@ public class LanguageServerWrapper implements Disposable {
     }
 
     record LSPFileConnectionInfo(@Nullable Document document, @Nullable String documentText,
-                                 @Nullable String languageId, boolean waitForDidOpen) {
+                                long documentModificationStamp, @Nullable String languageId, boolean waitForDidOpen) {
+        LSPFileConnectionInfo(@Nullable Document document, @Nullable String documentText,
+                              @Nullable String languageId, boolean waitForDidOpen) {
+            this(document, documentText, -1, languageId, waitForDidOpen);
+        }
     }
 
     public LanguageServerWrapper.@NotNull LSPFileConnectionInfo createFileConnectionInfo(@NotNull VirtualFile file,
                                                                                          @NotNull Document document,
                                                                                          boolean waitForDidOpen) {
-        String text = document.getText();
-        String languageId = getServerDefinition().getLanguageId(file, getProject());
-        return new LanguageServerWrapper.LSPFileConnectionInfo(document, text, languageId, waitForDidOpen);
+        return ReadAction.compute(() -> {
+            String text = document.getText();
+            long modificationStamp = document.getModificationStamp();
+            String languageId = getServerDefinition().getLanguageId(file, getProject());
+            return new LSPFileConnectionInfo(document, text, modificationStamp, languageId, waitForDidOpen);
+        });
     }
 
     // LSP traces
