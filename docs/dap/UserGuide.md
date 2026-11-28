@@ -678,14 +678,17 @@ LSP4IJ provides DAP templates that allow to initialize a given DAP server very q
   languages that LLDB debugs.
 - [Docker: Dockerfile Build Debugging](./user-defined-dap/buildx-dockerfile.md) which allows you to debug the build of a
   `Dockerfile`.
+- [EmmyLua Debug Adapter](./user-defined-dap/emmylua-dap.md) which allows you to debug `Lua` files.
 - [Erlang edb DAP server](./user-defined-dap/erlang-edb.md) which allows you to debug `Erlang` files.
+- [GDB](./user-defined-dap/gdb.md) which allows you to debug `Ada`, `C`, `C++` and `Fortran` files.
 - [Go Delve DAP server](./user-defined-dap/go-delve.md) which allows you to debug `Go` files.
 - [Julia DAP server](./user-defined-dap/julia.md) which allows you to debug `Julia` files.
+- [netcoredbg](./user-defined-dap/netcoredbg.md) which allows you to debug `C#`, `F#` and `Visual Basic` files.
 - [Perl DAP server](./user-defined-dap/perl-dap.md) which allows you to debug `Perl` files. 
 - [Python Debugpy DAP server](./user-defined-dap/python-debugpy.md) which allows you to debug `Python` files.
 - [Ruby rdbg DAP server](./user-defined-dap/ruby-rdbg.md) which allows you to debug `Ruby` files.
 - [Swift DAP Server](./user-defined-dap/swift-lldb.md) which allows you to debug `Swift` files.
-- [VSCode JS Debug DAP Server](./user-defined-dap/vscode-js-debug.md) which allows you to debug `JavaScript/TypeScript` files.
+- [VSCode JS Debug DAP Server](./user-defined-dap/vscode-js-debug.md) which allows you to debug `JavaScript/TypeScript` files, in Node.js and in Chrome.
 
 To create a DAP server from a template, click `Choose template...` in the `New Debug Adapter Server` dialog, which the
 `+` of the [DAP settings](#dap-settings) and the `create a new server.` link of the [Server tab](#server-tab) open.

@@ -98,14 +98,17 @@ its debug adapter.
 |------------------------------------------------------------------------------|-----------------------------|
 | [CodeLLDB](./dap/user-defined-dap/codelldb.md)                               | Rust, C and C++             |
 | [Docker: Dockerfile Build Debugging](./dap/user-defined-dap/buildx-dockerfile.md) | the build of a Dockerfile |
+| [EmmyLua Debug Adapter](./dap/user-defined-dap/emmylua-dap.md)               | Lua                         |
 | [Erlang edb DAP server](./dap/user-defined-dap/erlang-edb.md)                | Erlang                      |
+| [GDB](./dap/user-defined-dap/gdb.md)                                         | Ada, C, C++ and Fortran     |
 | [Go Delve DAP server](./dap/user-defined-dap/go-delve.md)                    | Go                          |
 | [Julia DAP server](./dap/user-defined-dap/julia.md)                          | Julia                       |
+| [netcoredbg](./dap/user-defined-dap/netcoredbg.md)                           | C#, F# and Visual Basic     |
 | [Perl DAP server](./dap/user-defined-dap/perl-dap.md)                        | Perl                        |
 | [Python Debugpy DAP server](./dap/user-defined-dap/python-debugpy.md)        | Python                      |
 | [Ruby rdbg DAP server](./dap/user-defined-dap/ruby-rdbg.md)                  | Ruby                        |
 | [Swift DAP Server](./dap/user-defined-dap/swift-lldb.md)                     | Swift                       |
-| [VSCode JS Debug DAP Server](./dap/user-defined-dap/vscode-js-debug.md)      | JavaScript and TypeScript   |
+| [VSCode JS Debug DAP Server](./dap/user-defined-dap/vscode-js-debug.md)      | JavaScript and TypeScript, in Node.js and Chrome |
 
 ## Writing templates and installers
 
