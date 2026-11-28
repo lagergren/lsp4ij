@@ -1,0 +1,18 @@
+{
+  "id": "emmylua-dap",
+  "name": "EmmyLua Debug Adapter (Lua)",
+  "launch": {
+    "windows": "<<insert base directory>>/emmylua_dap.exe",
+    "default": "<<insert base directory>>/emmylua_dap"
+  },
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "Lua",
+        "patterns": [
+          "*.lua"
+        ]
+      }
+    }
+  ]
+}

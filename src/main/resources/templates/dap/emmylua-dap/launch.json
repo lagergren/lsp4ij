@@ -1,0 +1,16 @@
+{
+  "type": "emmylua_new",
+  "name": "Debug a Lua program that loads emmy_core",
+  "request": "launch",
+  "host": "localhost",
+  "port": 9966,
+  "sourcePaths": [
+    "${workspaceFolder}"
+  ],
+  "ext": [
+    ".lua",
+    ".lua.txt",
+    ".lua.bytes"
+  ],
+  "ideConnectDebugger": true
+}
