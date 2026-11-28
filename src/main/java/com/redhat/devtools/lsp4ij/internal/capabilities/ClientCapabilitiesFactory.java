@@ -295,17 +295,19 @@ public class ClientCapabilitiesFactory {
                 SemanticTokenTypes.Decorator,
                 "label"
         ));
+        // The standard token modifiers: the colors use declaration, definition, readonly, static and defaultLibrary,
+        // and deprecated strikes the token through
         semanticTokensCapabilities.setTokenModifiers(List.of(
                 SemanticTokenModifiers.Declaration,
                 SemanticTokenModifiers.Definition,
                 SemanticTokenModifiers.Readonly,
-                SemanticTokenModifiers.Static
-                /*"deprecated",
-                "abstract",
-                "async",
-                "modification",
-                "documentation",
-                "defaultLibrary"*/
+                SemanticTokenModifiers.Static,
+                SemanticTokenModifiers.Deprecated,
+                SemanticTokenModifiers.Abstract,
+                SemanticTokenModifiers.Async,
+                SemanticTokenModifiers.Modification,
+                SemanticTokenModifiers.Documentation,
+                SemanticTokenModifiers.DefaultLibrary
         ));
         semanticTokensCapabilities.setMultilineTokenSupport(Boolean.TRUE);
         semanticTokensCapabilities.setServerCancelSupport(Boolean.TRUE);
