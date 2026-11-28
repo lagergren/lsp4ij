@@ -143,7 +143,14 @@ public class EditorFeatureManager implements Disposable {
                             continue;
                         }
                         clearEditorCache(presentation.editor(), project, featureType);
-                        LSPFileSupport.getSupport(presentation.file()).restartDaemonCodeAnalyzerWithDebounce();
+                        var fileSupport = LSPFileSupport.getSupport(presentation.file());
+                        if (featureType == EditorFeatureType.SEMANTIC_TOKENS) {
+                            // workspace/semanticTokens/refresh: the semantic tokens of a visible editor are refreshed
+                            // promptly
+                            fileSupport.restartDaemonCodeAnalyzerForSemanticTokensRefresh(LSPFileSupport.NO_CANCELLABLE_CHECKER);
+                        } else {
+                            fileSupport.restartDaemonCodeAnalyzerWithDebounce();
+                        }
                         if (!cancelChecker.isCanceled()) {
                             presentation.updates().forEach(Runnable::run);
                         }

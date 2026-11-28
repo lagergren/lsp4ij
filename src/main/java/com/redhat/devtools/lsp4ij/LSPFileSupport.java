@@ -79,6 +79,12 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
      * runs for too, in milliseconds.
      */
     private static final long RESTART_DEBOUNCE_MILLIS = 2000;
+    /**
+     * How long a restart of the highlighting of the file that a language server's
+     * <code>workspace/semanticTokens/refresh</code> asks for waits at most, in milliseconds: the semantic tokens of a
+     * visible editor are to be refreshed promptly, which is about as long as the highlighting waits after typing.
+     */
+    private static final long SEMANTIC_TOKENS_REFRESH_DELAY_MILLIS = 300;
     private final PsiFile file;
     private final LSPCodeLensSupport codeLensSupport;
     private final LSPInlayHintsSupport inlayHintsSupport;
@@ -525,6 +531,18 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
      */
     public void restartDaemonCodeAnalyzerWithDebounce(@NotNull CancelChecker cancelChecker) {
         restartDaemonCodeAnalyzer(cancelChecker, restartDebounceMillis);
+    }
+
+    /**
+     * Call 'DaemonCodeAnalyzer.getInstance(project).restart(file);' within a short delay, for a language server's
+     * <code>workspace/semanticTokens/refresh</code>, by checking the given cancel checker: the semantic tokens of a
+     * visible editor are to be refreshed promptly. A restart that is pending already runs then.
+     *
+     * @param cancelChecker the cancel checker.
+     */
+    @ApiStatus.Internal
+    public void restartDaemonCodeAnalyzerForSemanticTokensRefresh(@NotNull CancelChecker cancelChecker) {
+        restartDaemonCodeAnalyzer(cancelChecker, SEMANTIC_TOKENS_REFRESH_DELAY_MILLIS);
     }
 
     /**

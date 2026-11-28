@@ -17,6 +17,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.redhat.devtools.lsp4ij.LSPFileSupport;
 import com.redhat.devtools.lsp4ij.fixtures.LSPCodeInsightFixtureTestCase;
 import com.redhat.devtools.lsp4ij.mock.MockLanguageServer;
 import org.eclipse.lsp4j.SemanticTokens;
@@ -25,12 +26,14 @@ import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
 import org.eclipse.lsp4j.services.LanguageClient;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A language server's <code>workspace/semanticTokens/refresh</code> shows its new semantic tokens without an edit: the
+ * A language server's <code>workspace/semanticTokens/refresh</code> shows its new semantic tokens without an edit,
+ * promptly: it doesn't wait for the debounce of the restarts of the highlighting that other features ask for, and the
  * refreshes of other features can't postpone it. The daemon of the test highlights the editor as the IDE does, by its
  * timer, and the test waits for the new tokens to show.
  */
@@ -63,6 +66,18 @@ public class SemanticTokensRefreshTest extends LSPCodeInsightFixtureTestCase {
         // The language server changes its tokens after the first request
         MockLanguageServer.INSTANCE.getTextDocumentService().setSemanticTokensProcessor(request ->
                 CompletableFuture.completedFuture(request.number() == 1 ? TOKENS : NEW_TOKENS));
+    }
+
+    public void testARefreshDoesNotWaitForTheDebounceOfOtherRestarts() throws Exception {
+        myFixture.configureByText(FILE_NAME, TEXT);
+        assertEquals(List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), semanticHighlights(myFixture.doHighlighting()));
+        // The restarts that other features ask for wait so long that the test can't pass by waiting for them
+        LSPFileSupport.getSupport(myFixture.getFile()).setRestartDebounce(Duration.ofMinutes(10));
+
+        whileTheDaemonRuns(() -> {
+            client().refreshSemanticTokens();
+            waitForTheNewTokens();
+        });
     }
 
     public void testRefreshesOfOtherFeaturesDoNotPostponeARefresh() throws Exception {
