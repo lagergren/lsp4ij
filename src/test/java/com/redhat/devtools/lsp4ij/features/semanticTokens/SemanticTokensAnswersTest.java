@@ -217,6 +217,15 @@ public class SemanticTokensAnswersTest extends LSPCodeInsightFixtureTestCase {
                 List.of(), semanticHighlights());
     }
 
+    public void testAnEmptyAnswerRemovesTheColors() {
+        startServer(request -> CompletableFuture.completedFuture(request.number() == 1 ? TOKENS : new SemanticTokens(List.of())));
+        myFixture.configureByText(FILE_NAME, TEXT);
+        assertEquals(List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), semanticHighlights());
+        insert(0, "x");
+
+        assertEquals("A language server which answers no tokens removes its colors", List.of(), semanticHighlights());
+    }
+
     /**
      * Starts the mock language server with semantic tokens of the types function and keyword, which answers the
      * semantic tokens requests with the given processor.

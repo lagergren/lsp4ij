@@ -15,6 +15,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.redhat.devtools.lsp4ij.LSPRequestConstants;
 import com.redhat.devtools.lsp4ij.LanguageServerItem;
+import com.redhat.devtools.lsp4ij.LanguageServersRegistry;
 import com.redhat.devtools.lsp4ij.features.AbstractLSPDocumentFeatureSupport;
 import com.redhat.devtools.lsp4ij.internal.CancellationSupport;
 import com.redhat.devtools.lsp4ij.internal.CancellationUtil;
@@ -31,7 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -53,6 +56,12 @@ import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.isDoneNorma
  * A request that a language server answered with an error completes exceptionally too, and is kept until the file
  * changes, so that its error isn't reported again at each restart of the highlighting. In both cases, the highlighting
  * shows the semantic tokens it showed last, which this support keeps, see {@link #getShownTokens()}.
+ * </p>
+ *
+ * <p>
+ * When several language servers of the file have semantic tokens, the file shows those of the first one, in the order
+ * of the mappings of their definitions, which answers with semantic tokens. When a language server before it gave no
+ * answer, or answered with an error, the request fails, and the file keeps the colors it shows.
  * </p>
  */
 public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<SemanticTokensParams, SemanticTokensData> {
@@ -134,17 +143,73 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
                         return CompletableFuture.completedFuture(null);
                     }
 
-                    // The semantic tokens of the first language server
-                    return getSemanticTokensFor(params, file, languageServers.get(0), cancellationSupport)
-                            .thenApply(answer -> switch (answer.status()) {
-                                case ANSWERED -> answer.data();
-                                // Kept until the file changes, so that the error isn't asked for, and reported, again
-                                // at each restart of the highlighting
-                                case ERROR -> throw new ErrorAnswerException();
-                                // Not kept, so that the next highlighting pass asks again
-                                case NO_ANSWER -> throw CompletableFutures.noAnswer();
-                            });
+                    // Ask each language server, in the order of their definitions, which doesn't depend on the
+                    // order in which they started
+                    List<CompletableFuture<ServerAnswer>> answers = languageServers
+                            .stream()
+                            .sorted(languageServerOrder())
+                            .map(languageServer -> getSemanticTokensFor(params, file, languageServer, cancellationSupport))
+                            .toList();
+                    return firstSemanticTokens(answers, 0, null);
                 });
+    }
+
+    /**
+     * Returns the order of the language servers of a file: the order of the mappings of their definitions, then of
+     * their ids, and of the labels of their instances.
+     */
+    private static @NotNull Comparator<LanguageServerItem> languageServerOrder() {
+        var registry = LanguageServersRegistry.getInstance();
+        return Comparator.<LanguageServerItem>comparingInt(languageServer -> registry.getMappingOrder(languageServer.getServerDefinition()))
+                .thenComparing(languageServer -> languageServer.getServerDefinition().getId())
+                .thenComparing(languageServer -> Objects.requireNonNullElse(languageServer.getServerWrapper().getInstanceLabel(), ""));
+    }
+
+    /**
+     * Returns the semantic tokens of the first of the given answers, from the given one, which has semantic tokens:
+     * the semantic tokens of one language server only, as their tokens can overlap, and as VS Code does. Later
+     * answers are waited for only while the earlier ones have none, so that a slower language server doesn't delay the
+     * semantic tokens of the first. An answer with no tokens, null or an empty list, as many language servers answer
+     * for a file they have nothing for, lets the next language server's answer be used.
+     * <p>
+     * A language server before the first one with semantic tokens that gave no answer, or answered with an error, fails
+     * the request, as VS Code does: the file keeps the colors it shows, instead of taking those of a later language
+     * server, or none, until that language server answers again. The future completes with the first answer without
+     * tokens when all the language servers answered without tokens, which removes the colors of the file.
+     *
+     * @param answers  the answers of the language servers, in their order.
+     * @param index    the first answer to look at.
+     * @param noTokens the first answer without tokens before the given answer, or null.
+     * @return the semantic tokens of the first of the given answers which has semantic tokens.
+     */
+    private static @NotNull CompletableFuture<SemanticTokensData> firstSemanticTokens(@NotNull List<CompletableFuture<ServerAnswer>> answers,
+                                                                                      int index,
+                                                                                      @Nullable SemanticTokensData noTokens) {
+        if (index == answers.size()) {
+            // The language servers answered that the file has no semantic tokens
+            return CompletableFuture.completedFuture(noTokens);
+        }
+        return answers.get(index).thenCompose(answer -> switch (answer.status()) {
+            case ANSWERED -> hasTokens(answer.data())
+                    ? CompletableFuture.completedFuture(answer.data())
+                    : firstSemanticTokens(answers, index + 1, noTokens != null ? noTokens : answer.data());
+            // Kept until the file changes, so that the error isn't asked for, and reported, again at each restart of
+            // the highlighting
+            case ERROR -> CompletableFuture.<SemanticTokensData>failedFuture(new ErrorAnswerException());
+            // Not kept, so that the next highlighting pass asks again
+            case NO_ANSWER -> CompletableFuture.<SemanticTokensData>failedFuture(CompletableFutures.noAnswer());
+        });
+    }
+
+    /**
+     * Returns true if the given answer of a language server has semantic tokens, and false when it is null or has none.
+     */
+    private static boolean hasTokens(@Nullable SemanticTokensData data) {
+        if (data == null) {
+            return false;
+        }
+        var tokens = data.getSemanticTokens().getData();
+        return tokens != null && !tokens.isEmpty();
     }
 
     /**

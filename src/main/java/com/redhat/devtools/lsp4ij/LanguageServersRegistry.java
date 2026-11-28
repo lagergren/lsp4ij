@@ -589,6 +589,28 @@ public class LanguageServersRegistry implements Disposable {
         return serverDefinitions.values();
     }
 
+    /**
+     * Returns the place of the first mapping of the given server definition among the mappings of all the server
+     * definitions, in the order in which they were registered: the order of the extensions of the plugins, then of the
+     * user-defined language servers. It orders the server definitions of a file in the same way from one start of the
+     * IDE to the next, unlike the order in which their language servers start.
+     *
+     * @param serverDefinition the server definition.
+     * @return the place of the first mapping of the given server definition, or {@link Integer#MAX_VALUE} when it has
+     * none.
+     */
+    @ApiStatus.Internal
+    public int getMappingOrder(@NotNull LanguageServerDefinition serverDefinition) {
+        int order = 0;
+        for (var association : fileAssociations) {
+            if (association.getServerDefinition().equals(serverDefinition)) {
+                return order;
+            }
+            order++;
+        }
+        return Integer.MAX_VALUE;
+    }
+
     public void addServerDefinition(@NotNull Project project,
                                     @NotNull LanguageServerDefinition serverDefinition,
                                     @Nullable List<ServerMappingSettings> mappings) {
