@@ -55,8 +55,9 @@ The `Configuration` tab holds the settings that ZLS asks for, in its `zls` secti
 ## Highlighting
 
 IntelliJ has no TextMate grammar for Zig, so a Zig file opens as plain text, and its colors come from the semantic
-tokens of ZLS. For TextMate highlighting too, add the grammar of [vscode-zig](https://github.com/ziglang/vscode-zig) in
-`Settings | Editor | TextMate Bundles`.
+tokens of ZLS. For TextMate highlighting too, add the grammar of
+[vscode-zig](https://codeberg.org/ziglang/vscode-zig), `syntaxes/zig.tmLanguage.json`, in
+`Settings | Editor | TextMate Bundles`. Zig and vscode-zig moved from GitHub to Codeberg; ZLS stays on GitHub.
 
 ## Debugging
 
