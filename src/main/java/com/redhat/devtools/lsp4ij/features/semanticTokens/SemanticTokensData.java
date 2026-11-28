@@ -13,6 +13,7 @@ package com.redhat.devtools.lsp4ij.features.semanticTokens;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
@@ -26,6 +27,7 @@ import com.redhat.devtools.lsp4ij.features.semanticTokens.inspector.SemanticToke
 import com.redhat.devtools.lsp4ij.features.semanticTokens.viewProvider.LSPSemanticTokensFileViewProvider;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +70,56 @@ public class SemanticTokensData {
     public void highlight(@NotNull PsiFile file,
                           @NotNull Document document,
                           @NotNull LazyHighlightInfo.Consumer addInfo) {
+        highlight(file, document, document, null, addInfo);
+    }
+
+    /**
+     * Highlight the given file / document with the current semanticTokens, which the language server computed for the
+     * given text of the document: an earlier version of it, when the highlighting shows again the semantic tokens of an
+     * earlier version. A token is highlighted only if its text is the same in the document, before its first change
+     * or after its last one, at its offset in the document.
+     *
+     * @param file       the file.
+     * @param document   the document.
+     * @param tokensText the text of the document that the semantic tokens were computed for.
+     * @param addInfo    callback to collect {@link HighlightInfo} created from the semantic-tokens data.
+     */
+    @ApiStatus.Internal
+    public void highlight(@NotNull PsiFile file,
+                          @NotNull Document document,
+                          @NotNull CharSequence tokensText,
+                          @NotNull LazyHighlightInfo.Consumer addInfo) {
+        CharSequence text = document.getImmutableCharSequence();
+        if (tokensText == text) {
+            highlight(file, document, document, null, addInfo);
+            return;
+        }
+        UnchangedText unchangedText = UnchangedText.between(tokensText, text);
+        if (unchangedText.prefixLength() == tokensText.length() && tokensText.length() == text.length()) {
+            // The same text
+            highlight(file, document, document, null, addInfo);
+            return;
+        }
+        highlight(file, document, EditorFactory.getInstance().createDocument(tokensText), unchangedText, addInfo);
+    }
+
+    /**
+     * Highlight the given document with the current semanticTokens, which the language server computed for the given
+     * tokens document.
+     *
+     * @param file           the file.
+     * @param document       the document.
+     * @param tokensDocument the document that the semantic tokens were computed for: the given document, or an
+     *                       earlier version of it.
+     * @param unchangedText  the text that the tokens document and the document have in common, or null when they are
+     *                       the same.
+     * @param addInfo        callback to collect {@link HighlightInfo} created from the semantic-tokens data.
+     */
+    private void highlight(@NotNull PsiFile file,
+                           @NotNull Document document,
+                           @NotNull Document tokensDocument,
+                           @Nullable UnchangedText unchangedText,
+                           @NotNull LazyHighlightInfo.Consumer addInfo) {
         LSPSemanticTokensFileViewProvider semanticTokensFileViewProvider = LSPSemanticTokensFileViewProvider.getInstance(file);
 
         var inspector = SemanticTokensInspectorManager.getInstance(file.getProject());
@@ -89,6 +141,7 @@ public class SemanticTokensData {
             // here ensures all token ranges are validated against a consistent length and
             // prevents any single token from causing an out-of-bounds HighlightInfo.
             int docLength = document.getTextLength();
+            int tokensDocLength = tokensDocument.getTextLength();
 
             int idx = 0;
             int prevLine = 0;
@@ -113,7 +166,7 @@ public class SemanticTokensData {
                         if (line == prevLine) {
                             offset += data;
                         } else {
-                            offset = LSPIJUtils.toOffset(line, data, document);
+                            offset = LSPIJUtils.toOffset(line, data, tokensDocument);
                         }
                         break;
                     case 2: // length
@@ -127,6 +180,12 @@ public class SemanticTokensData {
                         List<String> tokenModifiers = tokenModifiers(data, semanticTokensLegend.getTokenModifiers());
                         int start = offset;
                         int end = offset + length;
+                        if (unchangedText != null) {
+                            // A token of an earlier version of the document: at its offset in the document, if its
+                            // text hasn't changed, and skipped otherwise
+                            start = start < end && end <= tokensDocLength ? unchangedText.map(start, end) : -1;
+                            end = start + length;
+                        }
 
                         // Guard: skip tokens whose computed range is invalid or extends
                         // beyond the current document length.

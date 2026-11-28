@@ -166,6 +166,17 @@ public class CompletableFutures {
     }
 
     /**
+     * Returns the failure of a request that no language server answered, as {@link #answersOf(CompletableFuture)} fails
+     * it with, which {@link #awaitWithCheckCanceled(Future)} logs only at the debug level.
+     *
+     * @return the failure of a request that no language server answered.
+     */
+    @ApiStatus.Internal
+    public static @NotNull RuntimeException noAnswer() {
+        return new NoAnswerException();
+    }
+
+    /**
      * Returns true if the given future of {@link #mergeAnswersInOneFuture(List, CancellationSupport)} has completed
      * without an answer of any language server, or with null as no language server could be asked, and false
      * otherwise.

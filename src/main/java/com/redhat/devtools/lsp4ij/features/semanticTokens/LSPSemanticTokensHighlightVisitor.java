@@ -13,6 +13,7 @@ package com.redhat.devtools.lsp4ij.features.semanticTokens;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -108,19 +109,20 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
             this.holder = null;
             this.semanticTokens = null;
 
-            SemanticTokensResult result = getSemanticTokens(file);
+            var document = LSPIJUtils.getDocument(file.getVirtualFile());
+            SemanticTokensResult result = document != null ? getSemanticTokens(file, document) : null;
             if (result != null) {
                 this.semanticTokens = result.data();
                 if (!result.data().shouldVisitPsiElement(file)) {
                     // The PsiFile must highlight without using HighlightVisitor#visit(PsiElement)
                     // e.g. TextMate or PlainText files.
-                    highlightSemanticTokens(file, result, holder);
+                    highlightSemanticTokens(file, document, result, holder);
                     this.lazyInfos = null;
                     this.holder = null;
                 } else {
                     // The PsiFile is a custom PsiFile with proper tokenization of PsiElements;
                     // highlighting is driven by HighlightVisitor#visit(PsiElement).
-                    this.lazyInfos = highlightSemanticTokens(file, result, null);
+                    this.lazyInfos = highlightSemanticTokens(file, document, result, null);
                     this.holder = holder;
                 }
             }
@@ -159,11 +161,19 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
 
     /**
      * Pairs {@link SemanticTokensData} with the file modification stamp captured at
-     * fetch time. Threading the stamp through to {@link #highlightSemanticTokens}
+     * fetch time, and with the text of the file that the tokens were computed for.
+     * Threading the stamp through to {@link #highlightSemanticTokens}
      * allows a second staleness check right before highlights are applied, without
      * an extra {@code getModificationStamp()} call.
+     *
+     * @param data              the semantic tokens.
+     * @param modificationStamp the modification stamp of the file at fetch time.
+     * @param tokensText        the text of the file that the semantic tokens were computed for: the text of the
+     *                          file at fetch time, or an earlier one when the tokens are those shown last.
      */
-    private record SemanticTokensResult(@NotNull SemanticTokensData data, long modificationStamp) {}
+    private record SemanticTokensResult(@NotNull SemanticTokensData data,
+                                        long modificationStamp,
+                                        @NotNull CharSequence tokensText) {}
 
     /**
      * Fetches semantic tokens from the LSP server for the given file.
@@ -180,15 +190,22 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
      * applied — just after a short delay.
      * </p>
      *
-     * @param file the PSI file for which semantic tokens are requested
+     * <p>
+     * When the request has no answer, because it failed, or was cancelled (for instance by
+     * {@code workspace/semanticTokens/refresh}, which asks again), the tokens shown last are
+     * returned, so that the pass keeps the semantic colors of the file instead of removing them.
+     * </p>
+     *
+     * @param file     the PSI file for which semantic tokens are requested
+     * @param document the document of the file
      * @return the semantic tokens data paired with the modification stamp at fetch
-     *         time, or {@code null} if unavailable or stale
+     *         time, or {@code null} if the file has none
      * @throws ProcessCanceledException if the progress indicator is cancelled
      *                                  (e.g. a write action is pending); the caller
      *                                  (IntelliJ's highlighting framework) handles
      *                                  the reschedule automatically
      */
-    private static @Nullable SemanticTokensResult getSemanticTokens(@NotNull PsiFile file) {
+    private static @Nullable SemanticTokensResult getSemanticTokens(@NotNull PsiFile file, @NotNull Document document) {
         LSPSemanticTokensSupport semanticTokensSupport = LSPFileSupport.getSupport(file).getSemanticTokensSupport();
         var params = new SemanticTokensParams(new TextDocumentIdentifier());
         CompletableFuture<SemanticTokensData> semanticTokensFuture = semanticTokensSupport.getSemanticTokens(params);
@@ -210,9 +227,10 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
             throw e;
 
         } catch (CancellationException e) {
-            // The CompletableFuture itself was cancelled (e.g. the file was closed,
-            // or the language server shut down). Nothing to do — propagate as-is.
-            return null;
+            // The CompletableFuture itself was cancelled: keep the tokens shown last. A refresh or an edit
+            // cancels the requests of the future, not the future, which then completes without an answer
+            // (see below).
+            return getShownSemanticTokens(semanticTokensSupport, modificationStampBefore);
         }
 
         // Primary staleness check: if the file was modified while we were waiting,
@@ -220,18 +238,37 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
         // highlighting pass request fresh ones.
         if (file.getModificationStamp() != modificationStampBefore) {
             semanticTokensSupport.cancel();
-            return null;
+            return getShownSemanticTokens(semanticTokensSupport, file.getModificationStamp());
         }
 
-        if (isDoneNormally(semanticTokensFuture)) {
-            SemanticTokensData data = semanticTokensFuture.getNow(null);
-            if (data != null) {
-                // Return the data together with the stamp so highlightSemanticTokens()
-                // can perform its own staleness check before applying any highlights.
-                return new SemanticTokensResult(data, modificationStampBefore);
-            }
+        if (!isDoneNormally(semanticTokensFuture)) {
+            // No language server answered: its request was cancelled, by the client (as a refresh or an edit
+            // do) or by the language server itself (ServerCancelled, ContentModified), and the next pass asks
+            // again; or the language server answered with an error, which the support keeps until the file
+            // changes. Until then, keep the tokens shown last.
+            return getShownSemanticTokens(semanticTokensSupport, modificationStampBefore);
         }
-        return null;
+        SemanticTokensData data = semanticTokensFuture.getNow(null);
+        if (data == null) {
+            // The language servers answered that the file has no semantic tokens
+            semanticTokensSupport.setShownTokens(null);
+            return null;
+        }
+        CharSequence text = document.getImmutableCharSequence();
+        semanticTokensSupport.setShownTokens(new LSPSemanticTokensSupport.ShownSemanticTokens(data, text));
+        // Return the data together with the stamp so highlightSemanticTokens()
+        // can perform its own staleness check before applying any highlights.
+        return new SemanticTokensResult(data, modificationStampBefore, text);
+    }
+
+    /**
+     * Returns the semantic tokens that the highlighting of the file shows, for the given modification stamp of the
+     * file, or null when it shows none.
+     */
+    private static @Nullable SemanticTokensResult getShownSemanticTokens(@NotNull LSPSemanticTokensSupport semanticTokensSupport,
+                                                                         long modificationStamp) {
+        var shownTokens = semanticTokensSupport.getShownTokens();
+        return shownTokens != null ? new SemanticTokensResult(shownTokens.data(), modificationStamp, shownTokens.text()) : null;
     }
 
     /**
@@ -245,19 +282,17 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
      * {@link SemanticTokensData#highlight} and {@link LazyHighlightInfo#resolve} cover
      * the even narrower race where a write action arrives mid-highlight.</p>
      *
-     * @param file   the PSI file
-     * @param result the tokens + stamp returned by {@link #getSemanticTokens}
-     * @param holder the highlight holder, or {@code null} for the lazy (PSI-driven) path
+     * @param file     the PSI file
+     * @param document the document of the file
+     * @param result   the tokens + stamp returned by {@link #getSemanticTokens}
+     * @param holder   the highlight holder, or {@code null} for the lazy (PSI-driven) path
      * @return a {@link LazyHighlightInfo} array indexed by start offset (lazy path),
      *         or {@code null} (direct path or stale tokens)
      */
     private static @Nullable LazyHighlightInfo[] highlightSemanticTokens(@NotNull PsiFile file,
+                                                                         @NotNull Document document,
                                                                          @NotNull SemanticTokensResult result,
                                                                          @Nullable HighlightInfoHolder holder) {
-        var document = LSPIJUtils.getDocument(file.getVirtualFile());
-        if (document == null) {
-            return null;
-        }
 
         // Secondary staleness check: cancel the entire pass if the document changed
         // between getSemanticTokens() and now. Applying tokens from a previous document
@@ -271,7 +306,7 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
             // Direct highlight path (TextMate / PlainText files).
             // LazyHighlightInfo.resolve() returns null for invalid ranges (defensive
             // guard for the rare race described in the class Javadoc); skip those.
-            result.data().highlight(file, document, (start, end, colorKey) -> {
+            result.data().highlight(file, document, result.tokensText(), (start, end, colorKey) -> {
                 var info = LazyHighlightInfo.resolve(start, end, colorKey);
                 if (info != null) {
                     holder.add(info);
@@ -287,7 +322,7 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
             // rejects out-of-bounds tokens, and the bounds check below covers the
             // remaining window between that snapshot and the array allocation.
             var infos = new LazyHighlightInfo[document.getTextLength()];
-            result.data().highlight(file, document, (start, end, colorKey) -> {
+            result.data().highlight(file, document, result.tokensText(), (start, end, colorKey) -> {
                 // SemanticTokensData validated start/end against its own docLength
                 // snapshot. This guard covers the window between that snapshot and the
                 // infos[] allocation above.
