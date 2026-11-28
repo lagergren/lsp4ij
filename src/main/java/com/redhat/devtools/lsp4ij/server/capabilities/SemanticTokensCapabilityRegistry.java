@@ -64,6 +64,29 @@ public class SemanticTokensCapabilityRegistry extends TextDocumentServerCapabili
         return super.isSupported(file, SERVER_CAPABILITIES_PREDICATE);
     }
 
+    /**
+     * Returns true if the language server has semantic tokens for a range of the given file only, and not for the whole
+     * file: <code>textDocument/semanticTokens/range</code> without <code>textDocument/semanticTokens/full</code>, and
+     * false otherwise.
+     *
+     * @param file the Psi file.
+     * @return true if the language server has semantic tokens for a range of the given file only, and false otherwise.
+     */
+    public boolean isSemanticTokensRangeOnly(@NotNull PsiFile file) {
+        if (super.isSupported(file, sc -> hasFull(sc.getSemanticTokensProvider()), SemanticTokensCapabilityRegistry::hasFull)) {
+            return false;
+        }
+        return super.isSupported(file, sc -> hasRange(sc.getSemanticTokensProvider()), SemanticTokensCapabilityRegistry::hasRange);
+    }
+
+    private static boolean hasFull(@Nullable SemanticTokensWithRegistrationOptions options) {
+        return options != null && hasCapability(options.getFull());
+    }
+
+    private static boolean hasRange(@Nullable SemanticTokensWithRegistrationOptions options) {
+        return options != null && hasCapability(options.getRange());
+    }
+
     public @Nullable SemanticTokensLegend getLegend() {
         var options = super.getOptions();
         if (options.isEmpty()) {

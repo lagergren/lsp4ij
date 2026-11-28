@@ -309,7 +309,9 @@ public class ClientCapabilitiesFactory {
         ));
         semanticTokensCapabilities.setMultilineTokenSupport(Boolean.TRUE);
         semanticTokensCapabilities.setServerCancelSupport(Boolean.TRUE);
-        var semanticTokensClientCapabilitiesRequests = new SemanticTokensClientCapabilitiesRequests(Boolean.TRUE, Boolean.FALSE);
+        // textDocument/semanticTokens/full, and textDocument/semanticTokens/range, for the whole file, to a language
+        // server which has semantic tokens for a range only
+        var semanticTokensClientCapabilitiesRequests = new SemanticTokensClientCapabilitiesRequests(Boolean.TRUE, Boolean.TRUE);
         semanticTokensCapabilities.setFormats(List.of(TokenFormat.Relative));
         semanticTokensCapabilities.setRequests(semanticTokensClientCapabilitiesRequests);
         textDocumentClientCapabilities.setSemanticTokens(semanticTokensCapabilities);

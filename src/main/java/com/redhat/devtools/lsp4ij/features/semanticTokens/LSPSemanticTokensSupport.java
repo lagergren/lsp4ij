@@ -10,9 +10,11 @@
  ******************************************************************************/
 package com.redhat.devtools.lsp4ij.features.semanticTokens;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.redhat.devtools.lsp4ij.LSPIJUtils;
 import com.redhat.devtools.lsp4ij.LSPRequestConstants;
 import com.redhat.devtools.lsp4ij.LanguageServerItem;
 import com.redhat.devtools.lsp4ij.LanguageServersRegistry;
@@ -20,9 +22,12 @@ import com.redhat.devtools.lsp4ij.features.AbstractLSPDocumentFeatureSupport;
 import com.redhat.devtools.lsp4ij.internal.CancellationSupport;
 import com.redhat.devtools.lsp4ij.internal.CancellationUtil;
 import com.redhat.devtools.lsp4ij.internal.CompletableFutures;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.eclipse.lsp4j.SemanticTokensParams;
+import org.eclipse.lsp4j.SemanticTokensRangeParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,6 +45,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.isDoneNormally;
 
@@ -47,7 +53,9 @@ import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.isDoneNorma
  * LSP semanticTokens support which loads and caches semantic tokens by consuming:
  *
  * <ul>
- *     <li>LSP 'textDocument/semanticTokens' requests</li>
+ *     <li>LSP 'textDocument/semanticTokens/full' requests</li>
+ *     <li>LSP 'textDocument/semanticTokens/range' requests, for the whole file, to a language server which has
+ *     semantic tokens for a range only</li>
  * </ul>
  *
  * <p>
@@ -126,11 +134,17 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
     @Override
     protected CompletableFuture<SemanticTokensData> doLoad(SemanticTokensParams params, CancellationSupport cancellationSupport) {
         PsiFile file = super.getFile();
-        return getSemanticTokens(file, params, cancellationSupport);
+        // The range of the whole file, which a language server that has semantic tokens for a range only gets
+        Document document = LSPIJUtils.getDocument(file);
+        Range wholeFile = document != null
+                ? new Range(new Position(0, 0), LSPIJUtils.toPosition(document.getTextLength(), document))
+                : null;
+        return getSemanticTokens(file, params, wholeFile, cancellationSupport);
     }
 
     private static @NotNull CompletableFuture<SemanticTokensData> getSemanticTokens(@NotNull PsiFile file,
                                                                                     @NotNull SemanticTokensParams params,
+                                                                                    @Nullable Range wholeFile,
                                                                                     @NotNull CancellationSupport cancellationSupport) {
 
         return getLanguageServers(file,
@@ -148,7 +162,7 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
                     List<CompletableFuture<ServerAnswer>> answers = languageServers
                             .stream()
                             .sorted(languageServerOrder())
-                            .map(languageServer -> getSemanticTokensFor(params, file, languageServer, cancellationSupport))
+                            .map(languageServer -> getSemanticTokensFor(params, wholeFile, file, languageServer, cancellationSupport))
                             .toList();
                     return firstSemanticTokens(answers, 0, null);
                 });
@@ -286,17 +300,42 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
         private static final ServerAnswer NO_ANSWER = new ServerAnswer(null, AnswerStatus.NO_ANSWER);
     }
 
+    /**
+     * A semantic tokens request to a language server, which can be sent again: each time, it asks the language server
+     * for its text document service, which a restart of the language server replaces.
+     *
+     * @param send   sends the request.
+     * @param method the method of the request.
+     */
+    private record ServerRequest(@NotNull Supplier<CompletableFuture<SemanticTokens>> send, @NotNull String method) {
+    }
+
     private static CompletableFuture<ServerAnswer> getSemanticTokensFor(@NotNull SemanticTokensParams params,
+                                                                        @Nullable Range wholeFile,
                                                                         @NotNull PsiFile file,
                                                                         @NotNull LanguageServerItem languageServer,
                                                                         @NotNull CancellationSupport cancellationSupport) {
         // The parameters of this language server, with the Uri of the file it knows, which its retries reuse
-        var serverParams = new SemanticTokensParams(new TextDocumentIdentifier());
-        serverParams.setWorkDoneToken(params.getWorkDoneToken());
-        serverParams.setPartialResultToken(params.getPartialResultToken());
+        var textDocument = new TextDocumentIdentifier();
         // Update textDocument Uri with custom file Uri if needed
-        updateTextDocumentUri(serverParams.getTextDocument(), file, languageServer);
-        return getSemanticTokensFor(serverParams, languageServer, cancellationSupport, 0);
+        updateTextDocumentUri(textDocument, file, languageServer);
+        ServerRequest request;
+        if (wholeFile != null && languageServer.getClientFeatures().getSemanticTokensFeature()
+                .getSemanticTokensCapabilityRegistry().isSemanticTokensRangeOnly(file)) {
+            // A language server which has semantic tokens for a range only gets the range of the whole file
+            var rangeParams = new SemanticTokensRangeParams(textDocument, wholeFile);
+            rangeParams.setWorkDoneToken(params.getWorkDoneToken());
+            rangeParams.setPartialResultToken(params.getPartialResultToken());
+            request = new ServerRequest(() -> languageServer.getTextDocumentService().semanticTokensRange(rangeParams),
+                    LSPRequestConstants.TEXT_DOCUMENT_SEMANTIC_TOKENS_RANGE);
+        } else {
+            var fullParams = new SemanticTokensParams(textDocument);
+            fullParams.setWorkDoneToken(params.getWorkDoneToken());
+            fullParams.setPartialResultToken(params.getPartialResultToken());
+            request = new ServerRequest(() -> languageServer.getTextDocumentService().semanticTokensFull(fullParams),
+                    LSPRequestConstants.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL);
+        }
+        return getSemanticTokensFor(request, languageServer, cancellationSupport, 0);
     }
 
     /**
@@ -305,17 +344,15 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
      * (ServerCancelled), as the client declares <code>serverCancelSupport</code>, or because its content was modified
      * (ContentModified): the LSP specification asks the client to send such a request again.
      */
-    private static CompletableFuture<ServerAnswer> getSemanticTokensFor(@NotNull SemanticTokensParams params,
+    private static CompletableFuture<ServerAnswer> getSemanticTokensFor(@NotNull ServerRequest serverRequest,
                                                                         @NotNull LanguageServerItem languageServer,
                                                                         @NotNull CancellationSupport cancellationSupport,
                                                                         int retries) {
         CompletableFuture<SemanticTokens> request;
         CompletableFuture<SemanticTokens> answer;
         try {
-            request = languageServer
-                    .getTextDocumentService()
-                    .semanticTokensFull(params);
-            answer = cancellationSupport.execute(request, languageServer, LSPRequestConstants.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL);
+            request = serverRequest.send().get();
+            answer = cancellationSupport.execute(request, languageServer, serverRequest.method());
         } catch (CancellationException e) {
             // The request has been cancelled before it was sent (a ProcessCanceledException is one)
             return CompletableFuture.completedFuture(ServerAnswer.NO_ANSWER);
@@ -330,12 +367,12 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
                 // The language server hasn't answered: CancellationSupport has reported its error, if any,
                 // and completed with null instead
                 if (retries < MAX_RETRIES && isToBeSentAgain(request) && !cancellationSupport.isCanceled()) {
-                    return sendAgain(params, languageServer, cancellationSupport, retries);
+                    return sendAgain(serverRequest, languageServer, cancellationSupport, retries);
                 }
                 return CompletableFuture.completedFuture(isAnsweredWithError(request) ? ServerAnswer.ERROR : ServerAnswer.NO_ANSWER);
             }
             if (semanticTokens == null) {
-                // textDocument/semanticTokens/full may return null
+                // textDocument/semanticTokens/full and range may return null
                 return CompletableFuture.completedFuture(new ServerAnswer(null, AnswerStatus.ANSWERED));
             }
             return CompletableFuture.completedFuture(new ServerAnswer(new SemanticTokensData(semanticTokens,
@@ -349,7 +386,7 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
      * Sends the given semantic tokens request again, once the delay of the given retry is over, unless the client has
      * cancelled it meanwhile, as an edit or a refresh does, whose highlighting asks again itself.
      */
-    private static CompletableFuture<ServerAnswer> sendAgain(@NotNull SemanticTokensParams params,
+    private static CompletableFuture<ServerAnswer> sendAgain(@NotNull ServerRequest serverRequest,
                                                              @NotNull LanguageServerItem languageServer,
                                                              @NotNull CancellationSupport cancellationSupport,
                                                              int retries) {
@@ -359,7 +396,7 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
                 answer.complete(ServerAnswer.NO_ANSWER);
                 return;
             }
-            getSemanticTokensFor(params, languageServer, cancellationSupport, retries + 1)
+            getSemanticTokensFor(serverRequest, languageServer, cancellationSupport, retries + 1)
                     .whenComplete((serverAnswer, error) -> answer.complete(error == null ? serverAnswer : ServerAnswer.NO_ANSWER));
         }, RETRY_DELAY_MILLIS << retries, TimeUnit.MILLISECONDS);
         return answer;
