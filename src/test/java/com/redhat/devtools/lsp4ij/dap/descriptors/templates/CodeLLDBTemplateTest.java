@@ -35,7 +35,7 @@ public class CodeLLDBTemplateTest extends BasePlatformTestCase {
         VfsRootAccess.allowRootAccess(getTestRootDisposable(), templates);
     }
 
-    public void testTheTemplateMapsZigFilesAndHasAZigLaunchConfigurationAfterTheRustOne() {
+    public void testTheTemplateMapsZigFilesAndHasAZigLaunchConfiguration() {
         DAPTemplate template = DAPTemplateManager.getInstance().findTemplateById("codelldb");
         assertNotNull("The CodeLLDB template is bundled", template);
 
@@ -47,6 +47,7 @@ public class CodeLLDBTemplateTest extends BasePlatformTestCase {
                 .filter(configuration -> configuration.getType() == DebugMode.LAUNCH)
                 .map(LaunchConfiguration::getName)
                 .toList();
-        assertEquals(List.of("Launch Rust file", "Launch Zig program"), launches);
+        // In any order: the configurations are in the order of the files of the template's folder
+        assertSameElements(launches, "Launch Rust file", "Launch Zig program");
     }
 }
