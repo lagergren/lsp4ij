@@ -463,6 +463,7 @@ and potential configuration.
 * [JQ Language Server](./user-defined-ls/jq-lsp.md)
 * [Julia Language Server](./user-defined-ls/julia.md)
 * [LSP Server for EOLANG](./user-defined-ls/eo-lsp-server.md) 
+* [Lua Language Server (LuaLS)](./user-defined-ls/lua-language-server.md)
 * [Luau Language Server](./user-defined-ls/luau-lsp.md)
 * [Perl Language Server](./user-defined-ls/perl-lsp.md)
 * [Ruby LSP](./user-defined-ls/ruby-lsp.md)

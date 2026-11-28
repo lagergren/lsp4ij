@@ -1,0 +1,19 @@
+{
+  "id": "lua-language-server",
+  "name": "Lua Language Server (LuaLS)",
+  "programArgs": {
+    "default": "lua-language-server"
+  },
+  "expandConfiguration": true,
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "Lua",
+        "patterns": [
+          "*.lua"
+        ]
+      },
+      "languageId": "lua"
+    }
+  ]
+}

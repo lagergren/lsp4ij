@@ -1,0 +1,3333 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "LSP4IJ/lua-language-server/settings.schema.json",
+  "title": "LSP4IJ Lua Language Server (LuaLS) settings JSON schema",
+  "description": "JSON schema for the settings of LuaLS 3.19.2, which it asks for in its Lua section.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "Lua.addonManager.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the addon manager is enabled or not."
+    },
+    "Lua.addonManager.repositoryBranch": {
+      "type": "string",
+      "default": "",
+      "description": "Specifies the git branch used by the addon manager."
+    },
+    "Lua.addonManager.repositoryPath": {
+      "type": "string",
+      "default": "",
+      "description": "Specifies the git path used by the addon manager."
+    },
+    "Lua.addonRepositoryPath": {
+      "type": "string",
+      "default": "",
+      "description": "Specifies the addon repository path (not related to the addon manager)."
+    },
+    "Lua.codeLens.enable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable code lens."
+    },
+    "Lua.completion.autoRequire": {
+      "type": "boolean",
+      "default": true,
+      "description": "When the input looks like a file name, automatically `require` this file."
+    },
+    "Lua.completion.callSnippet": {
+      "type": "string",
+      "default": "Disable",
+      "enum": [
+        "Disable",
+        "Both",
+        "Replace"
+      ],
+      "description": "Shows function call snippets.",
+      "enumDescriptions": [
+        "Only shows `function name`.",
+        "Shows `function name` and `call snippet`.",
+        "Only shows `call snippet.`"
+      ]
+    },
+    "Lua.completion.displayContext": {
+      "type": "integer",
+      "default": 0,
+      "description": "Previewing the relevant code snippet of the suggestion may help you understand the usage of the suggestion. The number set indicates the number of intercepted lines in the code fragment. If it is set to `0`, this feature can be disabled."
+    },
+    "Lua.completion.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable completion."
+    },
+    "Lua.completion.keywordSnippet": {
+      "type": "string",
+      "default": "Replace",
+      "enum": [
+        "Disable",
+        "Both",
+        "Replace"
+      ],
+      "description": "Shows keyword syntax snippets.",
+      "enumDescriptions": [
+        "Only shows `keyword`.",
+        "Shows `keyword` and `syntax snippet`.",
+        "Only shows `syntax snippet`."
+      ]
+    },
+    "Lua.completion.maxSuggestCount": {
+      "type": "integer",
+      "default": 100,
+      "description": "Maximum number of fields to analyze for completions. When an object has more fields than this limit, completions will require more specific input to appear."
+    },
+    "Lua.completion.postfix": {
+      "type": "string",
+      "default": "@",
+      "description": "The symbol used to trigger the postfix suggestion."
+    },
+    "Lua.completion.requireFunction": {
+      "type": "string",
+      "default": "require",
+      "description": "The function to insert when an auto-require is triggered."
+    },
+    "Lua.completion.requireSeparator": {
+      "type": "string",
+      "default": ".",
+      "description": "The separator used when `require`."
+    },
+    "Lua.completion.showParams": {
+      "type": "boolean",
+      "default": true,
+      "description": "Display parameters in completion list. When the function has multiple definitions, they will be displayed separately."
+    },
+    "Lua.completion.showWord": {
+      "type": "string",
+      "default": "Fallback",
+      "enum": [
+        "Enable",
+        "Fallback",
+        "Disable"
+      ],
+      "description": "Show contextual words in suggestions.",
+      "enumDescriptions": [
+        "Always show context words in suggestions.",
+        "Contextual words are only displayed when suggestions based on semantics cannot be provided.",
+        "Do not display context words."
+      ]
+    },
+    "Lua.completion.workspaceWord": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the displayed context word contains the content of other files in the workspace."
+    },
+    "Lua.diagnostics.disable": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string",
+        "enum": [
+          "action-after-return",
+          "ambiguity-1",
+          "ambiguous-syntax",
+          "args-after-dots",
+          "assign-const-global",
+          "assign-type-mismatch",
+          "await-in-sync",
+          "block-after-else",
+          "break-outside",
+          "cast-local-type",
+          "cast-type-mismatch",
+          "circle-doc-class",
+          "close-non-object",
+          "code-after-break",
+          "codestyle-check",
+          "count-down-loop",
+          "declare-const",
+          "deprecated",
+          "different-requires",
+          "discard-returns",
+          "doc-field-no-class",
+          "duplicate-doc-alias",
+          "duplicate-doc-field",
+          "duplicate-doc-param",
+          "duplicate-index",
+          "duplicate-set-field",
+          "empty-block",
+          "env-is-global",
+          "err-assign-as-eq",
+          "err-c-long-comment",
+          "err-comment-prefix",
+          "err-do-as-then",
+          "err-eq-as-assign",
+          "err-esc",
+          "err-nonstandard-symbol",
+          "err-then-as-do",
+          "exp-in-action",
+          "global-close-attribute",
+          "global-element",
+          "global-in-nil-env",
+          "incomplete-signature-doc",
+          "index-in-func-name",
+          "inject-field",
+          "invisible",
+          "jump-local-scope",
+          "keyword",
+          "local-limit",
+          "lowercase-global",
+          "lua-doc-miss-sign",
+          "luadoc-error-diag-mode",
+          "luadoc-miss-alias-extends",
+          "luadoc-miss-alias-name",
+          "luadoc-miss-arg-name",
+          "luadoc-miss-cate-name",
+          "luadoc-miss-class-extends-name",
+          "luadoc-miss-class-name",
+          "luadoc-miss-diag-mode",
+          "luadoc-miss-diag-name",
+          "luadoc-miss-field-extends",
+          "luadoc-miss-field-name",
+          "luadoc-miss-fun-after-overload",
+          "luadoc-miss-generic-name",
+          "luadoc-miss-local-name",
+          "luadoc-miss-module-name",
+          "luadoc-miss-operator-name",
+          "luadoc-miss-param-extends",
+          "luadoc-miss-param-name",
+          "luadoc-miss-see-name",
+          "luadoc-miss-sign-name",
+          "luadoc-miss-symbol",
+          "luadoc-miss-type-name",
+          "luadoc-miss-vararg-type",
+          "luadoc-miss-version",
+          "malformed-number",
+          "miss-end",
+          "miss-esc-x",
+          "miss-exp",
+          "miss-exponent",
+          "miss-field",
+          "miss-loop-max",
+          "miss-loop-min",
+          "miss-method",
+          "miss-name",
+          "miss-sep-in-table",
+          "miss-space-between",
+          "miss-symbol",
+          "missing-fields",
+          "missing-global-doc",
+          "missing-local-export-doc",
+          "missing-parameter",
+          "missing-return",
+          "missing-return-value",
+          "multi-close",
+          "name-style-check",
+          "need-check-nil",
+          "need-paren",
+          "nesting-long-mark",
+          "newfield-call",
+          "newline-call",
+          "no-unknown",
+          "no-visible-label",
+          "not-yieldable",
+          "param-type-mismatch",
+          "redefined-label",
+          "redefined-local",
+          "redundant-parameter",
+          "redundant-return",
+          "redundant-return-value",
+          "redundant-value",
+          "return-type-mismatch",
+          "set-const",
+          "spell-check",
+          "trailing-space",
+          "unbalanced-assignments",
+          "undefined-doc-class",
+          "undefined-doc-name",
+          "undefined-doc-param",
+          "undefined-env-child",
+          "undefined-field",
+          "undefined-global",
+          "unexpect-dots",
+          "unexpect-efunc-name",
+          "unexpect-gfunc-name",
+          "unexpect-lfunc-name",
+          "unexpect-symbol",
+          "unicode-name",
+          "unknown-attribute",
+          "unknown-cast-variable",
+          "unknown-diag-code",
+          "unknown-operator",
+          "unknown-symbol",
+          "unreachable-code",
+          "unsupport-named-vararg",
+          "unsupport-symbol",
+          "unused-function",
+          "unused-label",
+          "unused-local",
+          "unused-vararg",
+          "variable-not-declared"
+        ]
+      },
+      "description": "Disabled diagnostic (Use code in hover brackets).",
+      "enumDescriptions": [
+        "Code after a `return` statement",
+        "Enable ambiguous operator precedence diagnostics. For example, the `num or 0 + 1` expression will be suggested `(num or 0) + 1` instead.",
+        "Ambiguous syntax",
+        "Arguments after `...`",
+        "Assigning to a const global variable",
+        "Enable diagnostics for assignments in which the value's type does not match the type of the assigned variable.",
+        "Enable diagnostics for calls of asynchronous functions within a synchronous function.",
+        "Block after `else`",
+        "Using `break` outside a loop",
+        "Enable diagnostics for casts of local variables where the target type does not match the defined type.",
+        "Enable diagnostics for casts where the target type does not match the initial type.",
+        "Circular `@class` inheritance",
+        "Enable diagnostics for attempts to close a variable with a non-object.",
+        "Enable diagnostics for code placed after a break statement in a loop.",
+        "Enable diagnostics for incorrectly styled lines.",
+        "Enable diagnostics for `for` loops which will never reach their max/limit because the loop is incrementing instead of decrementing.",
+        "Redeclaring a const constant",
+        "Enable diagnostics to highlight deprecated API.",
+        "Enable diagnostics for files which are required by two different paths.",
+        "Enable diagnostics for calls of functions annotated with `---@nodiscard` where the return values are ignored.",
+        "Enable diagnostics to highlight a field annotation without a defining class annotation.",
+        "Enable diagnostics for a duplicated alias annotation name.",
+        "Enable diagnostics for a duplicated field annotation name.",
+        "Enable diagnostics for a duplicated param annotation name.",
+        "Enable duplicate table index diagnostics.",
+        "Enable diagnostics for setting the same field in a class more than once.",
+        "Enable empty code block diagnostics.",
+        "`_ENV` used as a global variable",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "Expression used in statement position",
+        "Close attribute on a global variable",
+        "Enable diagnostics to warn about global elements.",
+        "Enable cannot use global variables （ `_ENV` is set to `nil`） diagnostics.",
+        "Incomplete @param or @return annotations for functions.",
+        "Index in a function name",
+        "Injecting a field into an object",
+        "Enable diagnostics for accesses to fields which are invisible.",
+        "Jumping into a local variable scope",
+        "Improper use of a keyword",
+        "Too many local variables",
+        "Enable lowercase global variable definition diagnostics.",
+        "LuaDoc comment missing a sign",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "Malformed number literal",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "Missing fields",
+        "Missing annotations for globals! Global functions must have a comment and annotations for all parameters and return values.",
+        "Missing annotations for exported locals! Exported local functions must have a comment and annotations for all parameters and return values.",
+        "Enable diagnostics for function calls where the number of arguments is less than the number of annotated function parameters.",
+        "Enable diagnostics for functions with return annotations which have no return statement.",
+        "Enable diagnostics for return statements without values although the containing function declares returns.",
+        "Multiple close operations",
+        "Enable diagnostics for name style.",
+        "Enable diagnostics for variable usages if `nil` or an optional (potentially `nil`) value was assigned to the variable before.",
+        "Parentheses required",
+        "Nested long comment markers",
+        "Enable newfield call diagnostics. It is raised when the parenthesis of a function call appear on the following line when defining a field in a table.",
+        "Enable newline call diagnostics. It's raised when a line starting with `(` is encountered, which is syntactically parsed as a function call on the previous line.",
+        "Enable diagnostics for cases in which the type cannot be inferred.",
+        "Invisible label",
+        "Enable diagnostics for calls to `coroutine.yield()` when it is not permitted.",
+        "Enable diagnostics for function calls where the type of a provided parameter does not match the type of the annotated function definition.",
+        "Redefined label",
+        "Enable redefined local variable diagnostics.",
+        "Enable redundant function parameter diagnostics.",
+        "Enable diagnostics for return statements which are not needed because the function would exit on its own.",
+        "Enable diagnostics for return statements which return an extra value which is not specified by a return annotation.",
+        "Enable the redundant values assigned diagnostics. It's raised during assignment operation, when the number of values is higher than the number of objects being assigned.",
+        "Enable diagnostics for return values whose type does not match the type declared in the corresponding return annotation.",
+        "Assigning to a const constant",
+        "Enable diagnostics for typos in strings.",
+        "Enable trailing space diagnostics.",
+        "Enable diagnostics on multiple assignments if not all variables obtain a value (e.g., `local x,y = 1`).",
+        "Enable diagnostics for class annotations in which an undefined class is referenced.",
+        "Enable diagnostics for type annotations referencing an undefined type or alias.",
+        "Enable diagnostics for cases in which a parameter annotation is given without declaring the parameter in the function definition.",
+        "Enable undefined environment variable diagnostics. It's raised when `_ENV` table is set to a new literal table, but the used global variable is no longer present in the global environment.",
+        "Enable diagnostics for cases in which an undefined field of a variable is read.",
+        "Enable undefined global variable diagnostics.",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "Unicode name",
+        "Unknown attribute",
+        "Enable diagnostics for casts of undefined variables.",
+        "Enable diagnostics in cases in which an unknown diagnostics code is entered.",
+        "Enable diagnostics for unknown operators.",
+        "Unknown symbol",
+        "Enable diagnostics for unreachable code.",
+        "Unsupported named vararg",
+        "TODO: Needs documentation",
+        "Enable unused function diagnostics.",
+        "Enable unused label diagnostics.",
+        "Enable unused local variable diagnostics.",
+        "Enable unused vararg diagnostics.",
+        "Using an undeclared variable"
+      ]
+    },
+    "Lua.diagnostics.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable diagnostics."
+    },
+    "Lua.diagnostics.enableScheme": {
+      "type": "array",
+      "default": [
+        "file"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "TODO: Needs documentation"
+    },
+    "Lua.diagnostics.globals": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Defined global variables."
+    },
+    "Lua.diagnostics.globalsRegex": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Find defined global variables using regex."
+    },
+    "Lua.diagnostics.groupFileStatus": {
+      "type": "object",
+      "properties": {
+        "ambiguity": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* ambiguity-1\n* count-down-loop\n* different-requires\n* newfield-call\n* newline-call"
+        },
+        "await": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* await-in-sync\n* not-yieldable"
+        },
+        "codestyle": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* codestyle-check\n* name-style-check\n* spell-check"
+        },
+        "conventions": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* global-element"
+        },
+        "duplicate": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* duplicate-index\n* duplicate-set-field"
+        },
+        "global": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* global-in-nil-env\n* lowercase-global\n* undefined-env-child\n* undefined-global"
+        },
+        "luadoc": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* circle-doc-class\n* doc-field-no-class\n* duplicate-doc-alias\n* duplicate-doc-field\n* duplicate-doc-param\n* incomplete-signature-doc\n* missing-global-doc\n* missing-local-export-doc\n* undefined-doc-class\n* undefined-doc-name\n* undefined-doc-param\n* unknown-cast-variable\n* unknown-diag-code\n* unknown-operator"
+        },
+        "redefined": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* redefined-local"
+        },
+        "strict": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* close-non-object\n* deprecated\n* discard-returns\n* invisible"
+        },
+        "strong": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* no-unknown"
+        },
+        "type-check": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* assign-type-mismatch\n* cast-local-type\n* cast-type-mismatch\n* inject-field\n* need-check-nil\n* param-type-mismatch\n* return-type-mismatch\n* undefined-field"
+        },
+        "unbalanced": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* missing-fields\n* missing-parameter\n* missing-return\n* missing-return-value\n* redundant-parameter\n* redundant-return-value\n* redundant-value\n* unbalanced-assignments"
+        },
+        "unused": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Fallback"
+          ],
+          "description": "* code-after-break\n* empty-block\n* redundant-return\n* trailing-space\n* unreachable-code\n* unused-function\n* unused-label\n* unused-local\n* unused-vararg"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Modify the diagnostic needed file status in a group.\n\n* Opened:  only diagnose opened files\n* Any:     diagnose all files\n* None:    disable this diagnostic\n\n`Fallback` means that diagnostics in this group are controlled by `diagnostics.neededFileStatus` separately.\nOther settings will override individual settings without end of `!`.\n"
+    },
+    "Lua.diagnostics.groupSeverity": {
+      "type": "object",
+      "properties": {
+        "ambiguity": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* ambiguity-1\n* count-down-loop\n* different-requires\n* newfield-call\n* newline-call"
+        },
+        "await": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* await-in-sync\n* not-yieldable"
+        },
+        "codestyle": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* codestyle-check\n* name-style-check\n* spell-check"
+        },
+        "conventions": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* global-element"
+        },
+        "duplicate": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* duplicate-index\n* duplicate-set-field"
+        },
+        "global": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* global-in-nil-env\n* lowercase-global\n* undefined-env-child\n* undefined-global"
+        },
+        "luadoc": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* circle-doc-class\n* doc-field-no-class\n* duplicate-doc-alias\n* duplicate-doc-field\n* duplicate-doc-param\n* incomplete-signature-doc\n* missing-global-doc\n* missing-local-export-doc\n* undefined-doc-class\n* undefined-doc-name\n* undefined-doc-param\n* unknown-cast-variable\n* unknown-diag-code\n* unknown-operator"
+        },
+        "redefined": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* redefined-local"
+        },
+        "strict": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* close-non-object\n* deprecated\n* discard-returns\n* invisible"
+        },
+        "strong": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* no-unknown"
+        },
+        "type-check": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* assign-type-mismatch\n* cast-local-type\n* cast-type-mismatch\n* inject-field\n* need-check-nil\n* param-type-mismatch\n* return-type-mismatch\n* undefined-field"
+        },
+        "unbalanced": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* missing-fields\n* missing-parameter\n* missing-return\n* missing-return-value\n* redundant-parameter\n* redundant-return-value\n* redundant-value\n* unbalanced-assignments"
+        },
+        "unused": {
+          "type": "string",
+          "default": "Fallback",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Fallback"
+          ],
+          "description": "* code-after-break\n* empty-block\n* redundant-return\n* trailing-space\n* unreachable-code\n* unused-function\n* unused-label\n* unused-local\n* unused-vararg"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Modify the diagnostic severity in a group.\n`Fallback` means that diagnostics in this group are controlled by `diagnostics.severity` separately.\nOther settings will override individual settings without end of `!`.\n"
+    },
+    "Lua.diagnostics.ignoredFiles": {
+      "type": "string",
+      "default": "Opened",
+      "enum": [
+        "Enable",
+        "Opened",
+        "Disable"
+      ],
+      "description": "How to diagnose ignored files.",
+      "enumDescriptions": [
+        "Always diagnose these files.",
+        "Only when these files are opened will it be diagnosed.",
+        "These files are not diagnosed."
+      ]
+    },
+    "Lua.diagnostics.libraryFiles": {
+      "type": "string",
+      "default": "Opened",
+      "enum": [
+        "Enable",
+        "Opened",
+        "Disable"
+      ],
+      "description": "How to diagnose files loaded via `Lua.workspace.library`.",
+      "enumDescriptions": [
+        "Always diagnose these files.",
+        "Only when these files are opened will it be diagnosed.",
+        "These files are not diagnosed."
+      ]
+    },
+    "Lua.diagnostics.neededFileStatus": {
+      "type": "object",
+      "properties": {
+        "ambiguity-1": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable ambiguous operator precedence diagnostics. For example, the `num or 0 + 1` expression will be suggested `(num or 0) + 1` instead."
+        },
+        "assign-type-mismatch": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for assignments in which the value's type does not match the type of the assigned variable."
+        },
+        "await-in-sync": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for calls of asynchronous functions within a synchronous function."
+        },
+        "cast-local-type": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for casts of local variables where the target type does not match the defined type."
+        },
+        "cast-type-mismatch": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for casts where the target type does not match the initial type."
+        },
+        "circle-doc-class": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Circular `@class` inheritance"
+        },
+        "close-non-object": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for attempts to close a variable with a non-object."
+        },
+        "code-after-break": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for code placed after a break statement in a loop."
+        },
+        "codestyle-check": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for incorrectly styled lines."
+        },
+        "count-down-loop": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for `for` loops which will never reach their max/limit because the loop is incrementing instead of decrementing."
+        },
+        "deprecated": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics to highlight deprecated API."
+        },
+        "different-requires": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for files which are required by two different paths."
+        },
+        "discard-returns": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for calls of functions annotated with `---@nodiscard` where the return values are ignored."
+        },
+        "doc-field-no-class": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics to highlight a field annotation without a defining class annotation."
+        },
+        "duplicate-doc-alias": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for a duplicated alias annotation name."
+        },
+        "duplicate-doc-field": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for a duplicated field annotation name."
+        },
+        "duplicate-doc-param": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for a duplicated param annotation name."
+        },
+        "duplicate-index": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable duplicate table index diagnostics."
+        },
+        "duplicate-set-field": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for setting the same field in a class more than once."
+        },
+        "empty-block": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable empty code block diagnostics."
+        },
+        "global-element": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics to warn about global elements."
+        },
+        "global-in-nil-env": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable cannot use global variables （ `_ENV` is set to `nil`） diagnostics."
+        },
+        "incomplete-signature-doc": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Incomplete @param or @return annotations for functions."
+        },
+        "inject-field": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Injecting a field into an object"
+        },
+        "invisible": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for accesses to fields which are invisible."
+        },
+        "lowercase-global": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable lowercase global variable definition diagnostics."
+        },
+        "missing-fields": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Missing fields"
+        },
+        "missing-global-doc": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Missing annotations for globals! Global functions must have a comment and annotations for all parameters and return values."
+        },
+        "missing-local-export-doc": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Missing annotations for exported locals! Exported local functions must have a comment and annotations for all parameters and return values."
+        },
+        "missing-parameter": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for function calls where the number of arguments is less than the number of annotated function parameters."
+        },
+        "missing-return": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for functions with return annotations which have no return statement."
+        },
+        "missing-return-value": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for return statements without values although the containing function declares returns."
+        },
+        "name-style-check": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for name style."
+        },
+        "need-check-nil": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for variable usages if `nil` or an optional (potentially `nil`) value was assigned to the variable before."
+        },
+        "newfield-call": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable newfield call diagnostics. It is raised when the parenthesis of a function call appear on the following line when defining a field in a table."
+        },
+        "newline-call": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable newline call diagnostics. It's raised when a line starting with `(` is encountered, which is syntactically parsed as a function call on the previous line."
+        },
+        "no-unknown": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for cases in which the type cannot be inferred."
+        },
+        "not-yieldable": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for calls to `coroutine.yield()` when it is not permitted."
+        },
+        "param-type-mismatch": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for function calls where the type of a provided parameter does not match the type of the annotated function definition."
+        },
+        "redefined-local": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable redefined local variable diagnostics."
+        },
+        "redundant-parameter": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable redundant function parameter diagnostics."
+        },
+        "redundant-return": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for return statements which are not needed because the function would exit on its own."
+        },
+        "redundant-return-value": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for return statements which return an extra value which is not specified by a return annotation."
+        },
+        "redundant-value": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable the redundant values assigned diagnostics. It's raised during assignment operation, when the number of values is higher than the number of objects being assigned."
+        },
+        "return-type-mismatch": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for return values whose type does not match the type declared in the corresponding return annotation."
+        },
+        "spell-check": {
+          "type": "string",
+          "default": "None",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for typos in strings."
+        },
+        "trailing-space": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable trailing space diagnostics."
+        },
+        "unbalanced-assignments": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics on multiple assignments if not all variables obtain a value (e.g., `local x,y = 1`)."
+        },
+        "undefined-doc-class": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for class annotations in which an undefined class is referenced."
+        },
+        "undefined-doc-name": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for type annotations referencing an undefined type or alias."
+        },
+        "undefined-doc-param": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for cases in which a parameter annotation is given without declaring the parameter in the function definition."
+        },
+        "undefined-env-child": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable undefined environment variable diagnostics. It's raised when `_ENV` table is set to a new literal table, but the used global variable is no longer present in the global environment."
+        },
+        "undefined-field": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for cases in which an undefined field of a variable is read."
+        },
+        "undefined-global": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable undefined global variable diagnostics."
+        },
+        "unknown-cast-variable": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for casts of undefined variables."
+        },
+        "unknown-diag-code": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics in cases in which an unknown diagnostics code is entered."
+        },
+        "unknown-operator": {
+          "type": "string",
+          "default": "Any",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for unknown operators."
+        },
+        "unreachable-code": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable diagnostics for unreachable code."
+        },
+        "unused-function": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable unused function diagnostics."
+        },
+        "unused-label": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable unused label diagnostics."
+        },
+        "unused-local": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable unused local variable diagnostics."
+        },
+        "unused-vararg": {
+          "type": "string",
+          "default": "Opened",
+          "enum": [
+            "Any",
+            "Opened",
+            "None",
+            "Any!",
+            "Opened!",
+            "None!"
+          ],
+          "description": "Enable unused vararg diagnostics."
+        }
+      },
+      "additionalProperties": false,
+      "description": "* Opened:  only diagnose opened files\n* Any:     diagnose all files\n* None:    disable this diagnostic\n\nEnd with `!` means override the group setting `diagnostics.groupFileStatus`.\n"
+    },
+    "Lua.diagnostics.severity": {
+      "type": "object",
+      "properties": {
+        "ambiguity-1": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable ambiguous operator precedence diagnostics. For example, the `num or 0 + 1` expression will be suggested `(num or 0) + 1` instead."
+        },
+        "assign-type-mismatch": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for assignments in which the value's type does not match the type of the assigned variable."
+        },
+        "await-in-sync": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for calls of asynchronous functions within a synchronous function."
+        },
+        "cast-local-type": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for casts of local variables where the target type does not match the defined type."
+        },
+        "cast-type-mismatch": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for casts where the target type does not match the initial type."
+        },
+        "circle-doc-class": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Circular `@class` inheritance"
+        },
+        "close-non-object": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for attempts to close a variable with a non-object."
+        },
+        "code-after-break": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for code placed after a break statement in a loop."
+        },
+        "codestyle-check": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for incorrectly styled lines."
+        },
+        "count-down-loop": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for `for` loops which will never reach their max/limit because the loop is incrementing instead of decrementing."
+        },
+        "deprecated": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics to highlight deprecated API."
+        },
+        "different-requires": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for files which are required by two different paths."
+        },
+        "discard-returns": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for calls of functions annotated with `---@nodiscard` where the return values are ignored."
+        },
+        "doc-field-no-class": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics to highlight a field annotation without a defining class annotation."
+        },
+        "duplicate-doc-alias": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for a duplicated alias annotation name."
+        },
+        "duplicate-doc-field": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for a duplicated field annotation name."
+        },
+        "duplicate-doc-param": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for a duplicated param annotation name."
+        },
+        "duplicate-index": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable duplicate table index diagnostics."
+        },
+        "duplicate-set-field": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for setting the same field in a class more than once."
+        },
+        "empty-block": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable empty code block diagnostics."
+        },
+        "global-element": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics to warn about global elements."
+        },
+        "global-in-nil-env": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable cannot use global variables （ `_ENV` is set to `nil`） diagnostics."
+        },
+        "incomplete-signature-doc": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Incomplete @param or @return annotations for functions."
+        },
+        "inject-field": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Injecting a field into an object"
+        },
+        "invisible": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for accesses to fields which are invisible."
+        },
+        "lowercase-global": {
+          "type": "string",
+          "default": "Information",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable lowercase global variable definition diagnostics."
+        },
+        "missing-fields": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Missing fields"
+        },
+        "missing-global-doc": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Missing annotations for globals! Global functions must have a comment and annotations for all parameters and return values."
+        },
+        "missing-local-export-doc": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Missing annotations for exported locals! Exported local functions must have a comment and annotations for all parameters and return values."
+        },
+        "missing-parameter": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for function calls where the number of arguments is less than the number of annotated function parameters."
+        },
+        "missing-return": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for functions with return annotations which have no return statement."
+        },
+        "missing-return-value": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for return statements without values although the containing function declares returns."
+        },
+        "name-style-check": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for name style."
+        },
+        "need-check-nil": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for variable usages if `nil` or an optional (potentially `nil`) value was assigned to the variable before."
+        },
+        "newfield-call": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable newfield call diagnostics. It is raised when the parenthesis of a function call appear on the following line when defining a field in a table."
+        },
+        "newline-call": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable newline call diagnostics. It's raised when a line starting with `(` is encountered, which is syntactically parsed as a function call on the previous line."
+        },
+        "no-unknown": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for cases in which the type cannot be inferred."
+        },
+        "not-yieldable": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for calls to `coroutine.yield()` when it is not permitted."
+        },
+        "param-type-mismatch": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for function calls where the type of a provided parameter does not match the type of the annotated function definition."
+        },
+        "redefined-local": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable redefined local variable diagnostics."
+        },
+        "redundant-parameter": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable redundant function parameter diagnostics."
+        },
+        "redundant-return": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for return statements which are not needed because the function would exit on its own."
+        },
+        "redundant-return-value": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for return statements which return an extra value which is not specified by a return annotation."
+        },
+        "redundant-value": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable the redundant values assigned diagnostics. It's raised during assignment operation, when the number of values is higher than the number of objects being assigned."
+        },
+        "return-type-mismatch": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for return values whose type does not match the type declared in the corresponding return annotation."
+        },
+        "spell-check": {
+          "type": "string",
+          "default": "Information",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for typos in strings."
+        },
+        "trailing-space": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable trailing space diagnostics."
+        },
+        "unbalanced-assignments": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics on multiple assignments if not all variables obtain a value (e.g., `local x,y = 1`)."
+        },
+        "undefined-doc-class": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for class annotations in which an undefined class is referenced."
+        },
+        "undefined-doc-name": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for type annotations referencing an undefined type or alias."
+        },
+        "undefined-doc-param": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for cases in which a parameter annotation is given without declaring the parameter in the function definition."
+        },
+        "undefined-env-child": {
+          "type": "string",
+          "default": "Information",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable undefined environment variable diagnostics. It's raised when `_ENV` table is set to a new literal table, but the used global variable is no longer present in the global environment."
+        },
+        "undefined-field": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for cases in which an undefined field of a variable is read."
+        },
+        "undefined-global": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable undefined global variable diagnostics."
+        },
+        "unknown-cast-variable": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for casts of undefined variables."
+        },
+        "unknown-diag-code": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics in cases in which an unknown diagnostics code is entered."
+        },
+        "unknown-operator": {
+          "type": "string",
+          "default": "Warning",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for unknown operators."
+        },
+        "unreachable-code": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable diagnostics for unreachable code."
+        },
+        "unused-function": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable unused function diagnostics."
+        },
+        "unused-label": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable unused label diagnostics."
+        },
+        "unused-local": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable unused local variable diagnostics."
+        },
+        "unused-vararg": {
+          "type": "string",
+          "default": "Hint",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint",
+            "Error!",
+            "Warning!",
+            "Information!",
+            "Hint!"
+          ],
+          "description": "Enable unused vararg diagnostics."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Modify the diagnostic severity.\n\nEnd with `!` means override the group setting `diagnostics.groupSeverity`.\n"
+    },
+    "Lua.diagnostics.unusedLocalExclude": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Do not diagnose `unused-local` when the variable name matches the following pattern."
+    },
+    "Lua.diagnostics.workspaceDelay": {
+      "type": "integer",
+      "default": 3000,
+      "description": "Latency (milliseconds) for workspace diagnostics."
+    },
+    "Lua.diagnostics.workspaceEvent": {
+      "type": "string",
+      "default": "OnSave",
+      "enum": [
+        "OnChange",
+        "OnSave",
+        "None"
+      ],
+      "description": "Set the time to trigger workspace diagnostics.",
+      "enumDescriptions": [
+        "Trigger workspace diagnostics when the file is changed.",
+        "Trigger workspace diagnostics when the file is saved.",
+        "Disable workspace diagnostics."
+      ]
+    },
+    "Lua.diagnostics.workspaceRate": {
+      "type": "integer",
+      "default": 100,
+      "description": "Workspace diagnostics run rate (%). Decreasing this value reduces CPU usage, but also reduces the speed of workspace diagnostics. The diagnosis of the file you are currently editing is always done at full speed and is not affected by this setting."
+    },
+    "Lua.doc.packageName": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Treat specific field names as package, e.g. `m_*` means `XXX.m_id` and `XXX.m_type` are package, witch can only be accessed in the file where the definition is located."
+    },
+    "Lua.doc.privateName": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Treat specific field names as private, e.g. `m_*` means `XXX.m_id` and `XXX.m_type` are private, witch can only be accessed in the class where the definition is located."
+    },
+    "Lua.doc.protectedName": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Treat specific field names as protected, e.g. `m_*` means `XXX.m_id` and `XXX.m_type` are protected, witch can only be accessed in the class where the definition is located and its subclasses."
+    },
+    "Lua.doc.regengine": {
+      "type": "string",
+      "default": "glob",
+      "enum": [
+        "glob",
+        "lua"
+      ],
+      "description": "The regular expression engine used for matching documentation scope names.",
+      "enumDescriptions": [
+        "The default lightweight pattern syntax.",
+        "Full Lua-style regular expressions."
+      ]
+    },
+    "Lua.docScriptPath": {
+      "type": "string",
+      "default": "",
+      "description": "The regular expression engine used for matching documentation scope names."
+    },
+    "Lua.format.defaultConfig": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": false,
+      "patternProperties": {
+        ".*": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "description": "The default format configuration. Has a lower priority than `.editorconfig` file in the workspace.\nRead [formatter docs](https://github.com/CppCXY/EmmyLuaCodeStyle/tree/master/docs) to learn usage.\n"
+    },
+    "Lua.format.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable code formatter."
+    },
+    "Lua.hint.arrayIndex": {
+      "type": "string",
+      "default": "Auto",
+      "enum": [
+        "Enable",
+        "Auto",
+        "Disable"
+      ],
+      "description": "Show hints of array index when constructing a table.",
+      "enumDescriptions": [
+        "Show hints in all tables.",
+        "Show hints only when the table is greater than 3 items, or the table is a mixed table.",
+        "Disable hints of array index."
+      ]
+    },
+    "Lua.hint.await": {
+      "type": "boolean",
+      "default": true,
+      "description": "If the called function is marked `---@async`, prompt `await` at the call."
+    },
+    "Lua.hint.awaitPropagate": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable the propagation of `await`. When a function calls a function marked `---@async`,it will be automatically marked as `---@async`."
+    },
+    "Lua.hint.enable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable inlay hint."
+    },
+    "Lua.hint.paramName": {
+      "type": "string",
+      "default": "All",
+      "enum": [
+        "All",
+        "Literal",
+        "Disable"
+      ],
+      "description": "Show hints of parameter name at the function call.",
+      "enumDescriptions": [
+        "All types of parameters are shown.",
+        "Only literal type parameters are shown.",
+        "Disable parameter hints."
+      ]
+    },
+    "Lua.hint.paramType": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show type hints at the parameter of the function."
+    },
+    "Lua.hint.semicolon": {
+      "type": "string",
+      "default": "SameLine",
+      "enum": [
+        "All",
+        "SameLine",
+        "Disable"
+      ],
+      "description": "If there is no semicolon at the end of the statement, display a virtual semicolon.",
+      "enumDescriptions": [
+        "All statements display virtual semicolons.",
+        "When two statements are on the same line, display a semicolon between them.",
+        "Disable virtual semicolons."
+      ]
+    },
+    "Lua.hint.setType": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show hints of type at assignment operation."
+    },
+    "Lua.hover.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable hover."
+    },
+    "Lua.hover.enumsLimit": {
+      "type": "integer",
+      "default": 5,
+      "description": "When the value corresponds to multiple types, limit the number of types displaying."
+    },
+    "Lua.hover.expandAlias": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to expand the alias. For example, expands `---@alias myType boolean|number` appears as `boolean|number`, otherwise it appears as `myType'.\n"
+    },
+    "Lua.hover.previewFields": {
+      "type": "integer",
+      "default": 10,
+      "description": "When hovering to view a table, limits the maximum number of previews for fields."
+    },
+    "Lua.hover.viewNumber": {
+      "type": "boolean",
+      "default": true,
+      "description": "Hover to view numeric content (only if literal is not decimal)."
+    },
+    "Lua.hover.viewString": {
+      "type": "boolean",
+      "default": true,
+      "description": "Hover to view the contents of a string (only if the literal contains an escape character)."
+    },
+    "Lua.hover.viewStringMax": {
+      "type": "integer",
+      "default": 1000,
+      "description": "The maximum length of a hover to view the contents of a string."
+    },
+    "Lua.language.completeAnnotation": {
+      "type": "boolean",
+      "default": true,
+      "description": "(VSCode only) Automatically insert \"---@ \" after a line break following a annotation."
+    },
+    "Lua.language.fixIndent": {
+      "type": "boolean",
+      "default": true,
+      "description": "(VSCode only) Fix incorrect auto-indentation, such as incorrect indentation when line breaks occur within a string containing the word \"function\"."
+    },
+    "Lua.misc.executablePath": {
+      "type": "string",
+      "default": "",
+      "description": "Specify the executable path in VSCode."
+    },
+    "Lua.misc.parameters": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "[Command line parameters](https://github.com/LuaLS/lua-telemetry-server/tree/master/method) when starting the language server in VSCode."
+    },
+    "Lua.nameStyle.config": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": false,
+      "patternProperties": {
+        ".*": {
+          "type": [
+            "string",
+            "array"
+          ]
+        }
+      },
+      "description": "Set name style config.\nRead [formatter docs](https://github.com/CppCXY/EmmyLuaCodeStyle/tree/master/docs) to learn usage.\n"
+    },
+    "Lua.runtime.builtin": {
+      "type": "object",
+      "properties": {
+        "basic": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "bit": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "bit32": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "builtin": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "coroutine": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "debug": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "ffi": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "io": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "jit": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "jit.profile": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "jit.util": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "math": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "os": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "package": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "string": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "string.buffer": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "table": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "table.clear": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "table.new": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        },
+        "utf8": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "enable",
+            "disable"
+          ],
+          "description": "TODO: Needs documentation"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Adjust the enabled state of the built-in library. You can disable (or redefine) the non-existent library according to the actual runtime environment.\n\n* `default`: Indicates that the library will be enabled or disabled according to the runtime version\n* `enable`: always enable\n* `disable`: always disable\n"
+    },
+    "Lua.runtime.enableLuaJITExtensions": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable LuaJIT extension syntax (requires `Lua.runtime.version` to be set to `LuaJIT`).\nEach extension can also be enabled individually via `Lua.runtime.nonstandardSymbol`.\n"
+    },
+    "Lua.runtime.fileEncoding": {
+      "type": "string",
+      "default": "utf8",
+      "enum": [
+        "utf8",
+        "ansi",
+        "utf16le",
+        "utf16be"
+      ],
+      "description": "File encoding. The `ansi` option is only available under the `Windows` platform.",
+      "enumDescriptions": [
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation"
+      ]
+    },
+    "Lua.runtime.meta": {
+      "type": "string",
+      "default": "${version} ${language} ${encoding}",
+      "description": "Format of the directory name of the meta files."
+    },
+    "Lua.runtime.nonstandardSymbol": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string",
+        "enum": [
+          "//",
+          "/**/",
+          "`",
+          "+=",
+          "-=",
+          "*=",
+          "/=",
+          "%=",
+          "^=",
+          "//=",
+          "|=",
+          "&=",
+          "<<=",
+          ">>=",
+          "||",
+          "&&",
+          "!",
+          "!=",
+          "continue",
+          "|lambda|",
+          "?.",
+          "?.(",
+          "?.[",
+          "??",
+          "ternary",
+          "~>>",
+          "~>>=",
+          "..=",
+          "~=",
+          "const",
+          "->",
+          "number_underscore",
+          "?(",
+          "?[",
+          "?:"
+        ]
+      },
+      "description": "Supports non-standard symbols. Make sure that your runtime environment supports these symbols.",
+      "enumDescriptions": [
+        "Line comment (C style).",
+        "Block comment (C style).",
+        "Backtick string literal.",
+        "Add compound assignment.",
+        "Subtract compound assignment.",
+        "Multiply compound assignment.",
+        "Divide compound assignment.",
+        "Modulo compound assignment.",
+        "Power compound assignment.",
+        "Floor-divide compound assignment.",
+        "Bitwise-or compound assignment.",
+        "Bitwise-and compound assignment.",
+        "Left shift compound assignment.",
+        "Right shift compound assignment.",
+        "Logical or (equivalent to `or`).",
+        "Logical and (equivalent to `and`).",
+        "Logical not (equivalent to `not`).",
+        "Not equal (equivalent to `~=`).",
+        "`continue` statement.",
+        "Pipe-parameter short function (`|x| expr`).",
+        "Safe navigation (field/method: `a?.b` / `obj?.:method()` / `obj:method?.()`).",
+        "Safe navigation call (`f?.()` / `f?.\"str\"` / `f?.{...}` / `f?.[[...]]`).",
+        "Safe navigation index (`t?.[key]`).",
+        "Nil-coalescing (`a ?? b`; takes the right side only when the left side is nil).",
+        "Ternary operator (`cond ? x : y`, right-associative; method calls forbidden in the `x` part).",
+        "Arithmetic right shift (`a ~>> b`, LuaJIT-specific; plain `>>` is logical).",
+        "Arithmetic right shift compound assignment (`a ~>>= b`).",
+        "String concatenation compound assignment (`a ..= b`).",
+        "Bitwise-xor compound assignment: only in statement context (e.g. `a ~= b` on its own line); in expressions it remains the not-equal operator.",
+        "`const` declaration (block-scoped local constant, cannot be reassigned or redeclared).",
+        "Short function arrow (`x -> expr` / `|x| -> expr` / `|| -> expr` / `-> do ... end`).",
+        "Underscores in number literals (e.g. `1_000`, `0x1_2`, `0b1_0`).",
+        "No-dot optional call (`f?()` equals `f?.()`; conflicts with ternary (`ternary`) parsing, not recommended together).",
+        "No-dot optional index (`t?[1]` equals `t?.[1]`; conflicts with ternary (`ternary`) parsing, not recommended together).",
+        "No-dot safe method (`obj?:get()` equals `obj?.:get()`)."
+      ]
+    },
+    "Lua.runtime.path": {
+      "type": "array",
+      "default": [
+        "?.lua",
+        "?/init.lua"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "When using `require`, how to find the file based on the input name.\nSetting this config to `?/init.lua` means that when you enter `require 'myfile'`, `${workspace}/myfile/init.lua` will be searched from the loaded files.\nif `runtime.pathStrict` is `false`, `${workspace}/**/myfile/init.lua` will also be searched.\nIf you want to load files outside the workspace, you need to set `Lua.workspace.library` first.\n"
+    },
+    "Lua.runtime.pathStrict": {
+      "type": "boolean",
+      "default": false,
+      "description": "When enabled, `runtime.path` will only search the first level of directories, see the description of `runtime.path`."
+    },
+    "Lua.runtime.plugin": {
+      "type": [
+        "string",
+        "array"
+      ],
+      "description": "Plugin path. Please read [wiki](https://luals.github.io/wiki/plugins) to learn more."
+    },
+    "Lua.runtime.pluginArgs": {
+      "type": [
+        "array",
+        "object"
+      ],
+      "description": "Additional arguments for the plugin."
+    },
+    "Lua.runtime.special": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": false,
+      "patternProperties": {
+        ".*": {
+          "default": "require",
+          "enum": [
+            "_G",
+            "rawset",
+            "rawget",
+            "setmetatable",
+            "require",
+            "dofile",
+            "loadfile",
+            "pcall",
+            "xpcall",
+            "assert",
+            "error",
+            "type",
+            "os.exit"
+          ],
+          "type": "string"
+        }
+      },
+      "description": "The custom global variables are regarded as some special built-in variables, and the language server will provide special support\nThe following example shows that 'include' is treated as' require '.\n```json\n\"Lua.runtime.special\" : {\n    \"include\" : \"require\"\n}\n```\n"
+    },
+    "Lua.runtime.unicodeName": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allows Unicode characters in name."
+    },
+    "Lua.runtime.version": {
+      "type": "string",
+      "default": "Lua 5.4",
+      "enum": [
+        "Lua 5.1",
+        "Lua 5.2",
+        "Lua 5.3",
+        "Lua 5.4",
+        "Lua 5.5",
+        "LuaJIT"
+      ],
+      "description": "Lua runtime version.",
+      "enumDescriptions": [
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation",
+        "TODO: Needs documentation"
+      ]
+    },
+    "Lua.semantic.annotation": {
+      "type": "boolean",
+      "default": true,
+      "description": "Semantic coloring of type annotations."
+    },
+    "Lua.semantic.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable semantic color. You may need to set `editor.semanticHighlighting.enabled` to `true` to take effect."
+    },
+    "Lua.semantic.keyword": {
+      "type": "boolean",
+      "default": false,
+      "description": "Semantic coloring of keywords/literals/operators. You only need to enable this feature if your editor cannot do syntax coloring."
+    },
+    "Lua.semantic.variable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Semantic coloring of variables/fields/parameters."
+    },
+    "Lua.signatureHelp.enable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable signature help."
+    },
+    "Lua.spell.dict": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Custom words for spell checking."
+    },
+    "Lua.type.castNumberToInteger": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allowed to assign the `number` type to the `integer` type."
+    },
+    "Lua.type.checkTableShape": {
+      "type": "boolean",
+      "default": false,
+      "description": "Strictly check the shape of the table.\n"
+    },
+    "Lua.type.inferParamType": {
+      "type": "boolean",
+      "default": false,
+      "description": "When a parameter type is not annotated, it is inferred from the function's call sites.\n\nWhen this setting is `false`, the type of the parameter is `any` when it is not annotated.\n"
+    },
+    "Lua.type.inferTableSize": {
+      "type": "integer",
+      "default": 10,
+      "description": "Maximum number of table fields analyzed during type inference."
+    },
+    "Lua.type.maxUnionVariants": {
+      "type": "integer",
+      "default": 0,
+      "description": "TODO: Needs documentation"
+    },
+    "Lua.type.weakNilCheck": {
+      "type": "boolean",
+      "default": false,
+      "description": "When checking the type of union type, ignore the `nil` in it.\n\nWhen this setting is `false`, the `number|nil` type cannot be assigned to the `number` type. It can be with `true`.\n"
+    },
+    "Lua.type.weakUnionCheck": {
+      "type": "boolean",
+      "default": false,
+      "description": "Once one subtype of a union type meets the condition, the union type also meets the condition.\n\nWhen this setting is `false`, the `number|boolean` type cannot be assigned to the `number` type. It can be with `true`.\n"
+    },
+    "Lua.typeFormat.config": {
+      "type": "object",
+      "properties": {
+        "auto_complete_end": {
+          "type": "string",
+          "default": "true",
+          "description": "Controls if `end` is automatically completed at suitable positions."
+        },
+        "auto_complete_table_sep": {
+          "type": "string",
+          "default": "true",
+          "description": "Controls if a separator is automatically appended at the end of a table declaration."
+        },
+        "format_line": {
+          "type": "string",
+          "default": "true",
+          "description": "Controls if a line is formatted at all."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Configures the formatting behavior while typing Lua code."
+    },
+    "Lua.window.progressBar": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show progress bar in status bar."
+    },
+    "Lua.window.statusBar": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show extension status in status bar."
+    },
+    "Lua.workspace.checkThirdParty": {
+      "type": [
+        "string",
+        "boolean"
+      ],
+      "description": "Automatic detection and adaptation of third-party libraries, currently supported libraries are:\n\n* OpenResty\n* Cocos4.0\n* LÖVE\n* LÖVR\n* skynet\n* Jass\n"
+    },
+    "Lua.workspace.dofileRoots": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "In addition to the current workspace, which directories `dofile` will treat as a possible root. The files in these directories will be loaded immediately."
+    },
+    "Lua.workspace.ignoreDir": {
+      "type": "array",
+      "default": [
+        ".vscode"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Ignored files and directories (Use `.gitignore` grammar)."
+    },
+    "Lua.workspace.ignoreSubmodules": {
+      "type": "boolean",
+      "default": true,
+      "description": "Ignore submodules."
+    },
+    "Lua.workspace.library": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "In addition to the current workspace, which directories will load files from. The files in these directories will be treated as externally provided code libraries, and some features (such as renaming fields) will not modify these files."
+    },
+    "Lua.workspace.maxPreload": {
+      "type": "integer",
+      "default": 5000,
+      "description": "Max preloaded files."
+    },
+    "Lua.workspace.preloadFileSize": {
+      "type": "integer",
+      "default": 500,
+      "description": "Skip files larger than this value (KB) when preloading."
+    },
+    "Lua.workspace.useGitIgnore": {
+      "type": "boolean",
+      "default": true,
+      "description": "Ignore files list in `.gitignore` ."
+    },
+    "Lua.workspace.userThirdParty": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Add private third-party library configuration file paths here, please refer to the built-in [configuration file path](https://github.com/LuaLS/lua-language-server/tree/master/meta/3rd)"
+    }
+  }
+}

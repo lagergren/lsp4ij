@@ -66,6 +66,7 @@ it up. Most templates install their language server the first time it starts.
 | [JQ Language Server](./user-defined-ls/jq-lsp.md)                                              | jq                                                         |
 | [Julia Language Server](./user-defined-ls/julia.md)                                            | Julia                                                      |
 | [LSP Server for EOLANG](./user-defined-ls/eo-lsp-server.md)                                    | EO                                                         |
+| [Lua Language Server (LuaLS)](./user-defined-ls/lua-language-server.md)                        | Lua                                                        |
 | [Luau Language Server](./user-defined-ls/luau-lsp.md)                                          | Luau                                                       |
 | [Perl Language Server](./user-defined-ls/perl-lsp.md)                                          | Perl                                                       |
 | [Ruby LSP](./user-defined-ls/ruby-lsp.md)                                                      | Ruby                                                       |

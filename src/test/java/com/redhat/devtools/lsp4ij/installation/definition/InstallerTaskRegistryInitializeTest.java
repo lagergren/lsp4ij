@@ -178,7 +178,7 @@ public class InstallerTaskRegistryInitializeTest {
         }
         var expected = new TreeMap<String, List<String>>();
         for (var template : List.of("lsp/astro-ls", "lsp/candor-lsp", "lsp/dart-lsp", "lsp/eo-lsp-server",
-                "lsp/metals", "lsp/ruby-lsp", "lsp/sdl-lsp", "lsp/sourcekit-lsp",
+                "lsp/lua-language-server", "lsp/metals", "lsp/ruby-lsp", "lsp/sdl-lsp", "lsp/sourcekit-lsp",
                 "lsp/stylelint-lsp", "lsp/svelte-language-server", "lsp/sysml-lsp", "lsp/typescript-language-server",
                 "lsp/vscode-css-language-server", "lsp/vscode-eslint-language-server", "lsp/vue-js-language-server",
                 "lsp/zls", "dap/go-delve")) {

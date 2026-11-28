@@ -1,0 +1,78 @@
+{
+  "id": "lua-language-server",
+  "name": "Lua Language Server (LuaLS)",
+  "executeOnStartServer": false,
+  "properties": {
+    "serverDist": "$USER_HOME$/.lsp4ij/lsp/lua-language-server"
+  },
+  "check": {
+    "exec": {
+      "name": "Trying current command",
+      "command": "${server.command}",
+      "timeout": 2000,
+      "onSuccess": {
+        "initialize": {
+          "name": "Check that lua-language-server starts"
+        }
+      }
+    }
+  },
+  "run": {
+    "download": {
+      "name": "Download lua-language-server",
+      "github": {
+        "owner": "LuaLS",
+        "repository": "lua-language-server",
+        "prerelease": false,
+        "asset": {
+          "windows": {
+            "x86_64": "lua-language-server-*-win32-x64.zip",
+            "x86": "lua-language-server-*-win32-ia32.zip",
+            "arm64": "lua-language-server-*-win32-x64.zip"
+          },
+          "unix": {
+            "x86_64": "lua-language-server-*-linux-x64.tar.gz",
+            "arm64": "lua-language-server-*-linux-arm64.tar.gz"
+          },
+          "mac": {
+            "x86_64": "lua-language-server-*-darwin-x64.tar.gz",
+            "arm64": "lua-language-server-*-darwin-arm64.tar.gz"
+          }
+        }
+      },
+      "url": {
+        "windows": {
+          "x86_64": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-win32-x64.zip",
+          "x86": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-win32-ia32.zip",
+          "arm64": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-win32-x64.zip"
+        },
+        "unix": {
+          "x86_64": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-linux-x64.tar.gz",
+          "arm64": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-linux-arm64.tar.gz"
+        },
+        "mac": {
+          "x86_64": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-darwin-x64.tar.gz",
+          "arm64": "https://github.com/LuaLS/lua-language-server/releases/download/3.19.2/lua-language-server-3.19.2-darwin-arm64.tar.gz"
+        }
+      },
+      "output": {
+        "dir": "${serverDist}",
+        "file": {
+          "name": {
+            "windows": "bin/lua-language-server.exe",
+            "unix": "bin/lua-language-server",
+            "mac": "bin/lua-language-server"
+          },
+          "executable": true
+        }
+      },
+      "onSuccess": {
+        "configureServer": {
+          "name": "Configure lua-language-server command",
+          "command": "\"${output.dir}/${output.file.name}\"",
+          "update": true
+        }
+      }
+    }
+  }
+}

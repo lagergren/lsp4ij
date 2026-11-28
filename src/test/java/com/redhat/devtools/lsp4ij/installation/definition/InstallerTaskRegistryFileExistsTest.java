@@ -489,6 +489,16 @@ public class InstallerTaskRegistryFileExistsTest {
     }
 
     @Test
+    public void testLuaLanguageServerDownloadExtractsAllOfItsArchiveAndGivesTheCommandOfItsBin() throws Exception {
+        // The archive of a LuaLS release has bin/lua-language-server next to the scripts that it runs
+        String program = SystemInfo.isWindows ? "bin/lua-language-server.exe" : "bin/lua-language-server";
+        assertTheDownloadGivesTheCommand("lsp/lua-language-server", "lua-language-server-3.19.2-linux-x64.tar.gz",
+                List.of(program, "main.lua", "debugger.lua", "LICENSE", "changelog.md", "locale/en-us/script.lua",
+                        "meta/template/basic.lua", "script/luals.lua"),
+                program, "", List.of("main.lua", "script/luals.lua", "meta/template/basic.lua"));
+    }
+
+    @Test
     public void testErlangEdbGetsFromItsCheckTheCommandThatItsDownloadGivesIt() throws Exception {
         // The template has the command of an edb on the PATH; the archive of edb has the folder edb-<version>/, whose
         // content goes into the folder of the template, as the launcher edb finds its escripts next to it
