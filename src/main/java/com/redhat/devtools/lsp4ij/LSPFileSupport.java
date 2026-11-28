@@ -61,6 +61,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * LSP file support stored in the opened {@link PsiFile} with key "lsp.file.support"
@@ -73,8 +75,8 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
     };
     private static final Key<LSPFileSupport> LSP_FILE_SUPPORT_KEY = Key.create("lsp.file.support");
     /**
-     * How long a restart of the highlighting of the file waits for more requests to restart it, which it then runs with,
-     * in milliseconds.
+     * How long a restart of the highlighting of the file waits at most for more requests to restart it, which it then
+     * runs for too, in milliseconds.
      */
     private static final long RESTART_DEBOUNCE_MILLIS = 2000;
     private final PsiFile file;
@@ -112,6 +114,14 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
     private volatile Alarm refreshPsiFileAlarm = null;
     // How long a restart of the highlighting of the file waits for more requests, which only a test changes
     private volatile long restartDebounceMillis = RESTART_DEBOUNCE_MILLIS;
+    // Whether a restart of the highlighting of the file is pending, when it runs, in System.nanoTime(), and the cancel
+    // checkers of the requests that it runs for, guarded by this. The restart is pending until it takes its requests:
+    // a request that comes later, even while the restart runs, asks for a restart of its own
+    private boolean restartPending;
+    private long pendingRestartTime;
+    private final List<CancelChecker> pendingRestartCancelCheckers = new ArrayList<>();
+    // Runs once a restart has taken its requests and submitted the restart, which only a test sets
+    private volatile @Nullable Runnable restartTakenHook;
     private boolean disposed;
 
     private LSPFileSupport(@NotNull PsiFile file) {
@@ -505,10 +515,26 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
 
     /**
      * Call 'DaemonCodeAnalyzer.getInstance(project).restart(file);' with debounce by checking the given cancel checker.
+     * <p>
+     * The restart waits {@value #RESTART_DEBOUNCE_MILLIS} ms for more requests to restart the highlighting of the file,
+     * which it then runs for too. A request never postpones a restart that is pending already, so that requests which
+     * come more often than that, as from a language server which refreshes its features while it indexes, can't keep
+     * the highlighting from restarting.
      *
      * @param cancelChecker the cancel checker.
      */
     public void restartDaemonCodeAnalyzerWithDebounce(@NotNull CancelChecker cancelChecker) {
+        restartDaemonCodeAnalyzer(cancelChecker, restartDebounceMillis);
+    }
+
+    /**
+     * Restarts the highlighting of the file after the given delay at the latest, with the restart that is pending
+     * already when it runs no later, so that a request never postpones the restart that an earlier one asked for.
+     *
+     * @param cancelChecker the cancel checker of the request.
+     * @param delayMillis   how long the restart waits at most, in milliseconds.
+     */
+    private void restartDaemonCodeAnalyzer(@NotNull CancelChecker cancelChecker, long delayMillis) {
         if (cancelChecker.isCanceled()) {
             return;
         }
@@ -516,23 +542,53 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
         if (alarm == null) {
             return;
         }
-        alarm.cancelAllRequests();
-        alarm.addRequest(() -> {
-            var project = file.getProject();
-            var coalesceBy = new CoalesceByKey("psiFile/refresh", file.getVirtualFile().getUrl());
-            var executeInSmartMode = DumbService.getInstance(project).isDumb();
-            var action = ReadAction.nonBlocking((Callable<Void>) () -> {
-                        if (!cancelChecker.isCanceled()) {
-                            DaemonCodeAnalyzer.getInstance(project).restart(file);
-                        }
-                        return null;
-                    }).expireWith(this)
-                    .coalesceBy(coalesceBy);
-            if (executeInSmartMode) {
-                action.inSmartMode(project);
+        synchronized (this) {
+            long time = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(delayMillis);
+            pendingRestartCancelCheckers.add(cancelChecker);
+            if (restartPending && pendingRestartTime - time <= 0) {
+                // The pending restart runs no later than this request asks: it runs for this request too
+                return;
             }
-            action.submit(AppExecutorUtil.getAppExecutorService());
-        }, restartDebounceMillis);
+            restartPending = true;
+            pendingRestartTime = time;
+            alarm.cancelAllRequests();
+            alarm.addRequest(this::restartDaemonCodeAnalyzerNow, delayMillis);
+        }
+    }
+
+    private void restartDaemonCodeAnalyzerNow() {
+        List<CancelChecker> cancelCheckers;
+        synchronized (this) {
+            // The restart takes its requests: a later one asks for a restart of its own, which the Alarm, which counts
+            // this one until it returns, wouldn't say
+            restartPending = false;
+            cancelCheckers = List.copyOf(pendingRestartCancelCheckers);
+            pendingRestartCancelCheckers.clear();
+        }
+        // The restart runs if one of its requests still asks for it
+        CancelChecker cancelChecker = () -> {
+            if (cancelCheckers.stream().allMatch(CancelChecker::isCanceled)) {
+                throw new CancellationException();
+            }
+        };
+        var project = file.getProject();
+        var coalesceBy = new CoalesceByKey("psiFile/refresh", file.getVirtualFile().getUrl());
+        var executeInSmartMode = DumbService.getInstance(project).isDumb();
+        var action = ReadAction.nonBlocking((Callable<Void>) () -> {
+                    if (!cancelChecker.isCanceled()) {
+                        DaemonCodeAnalyzer.getInstance(project).restart(file);
+                    }
+                    return null;
+                }).expireWith(this)
+                .coalesceBy(coalesceBy);
+        if (executeInSmartMode) {
+            action.inSmartMode(project);
+        }
+        action.submit(AppExecutorUtil.getAppExecutorService());
+        var hook = restartTakenHook;
+        if (hook != null) {
+            hook.run();
+        }
     }
 
     /**
@@ -545,6 +601,17 @@ public class LSPFileSupport extends UserDataHolderBase implements Disposable {
     @TestOnly
     public void setRestartDebounce(@NotNull Duration debounce) {
         this.restartDebounceMillis = debounce.toMillis();
+    }
+
+    /**
+     * Sets what runs once a restart of the highlighting of this file has taken its requests and submitted the restart,
+     * while the restart still runs, so that a test can ask for another restart then.
+     *
+     * @param hook what runs then, or null.
+     */
+    @TestOnly
+    public void setRestartTakenHook(@Nullable Runnable hook) {
+        this.restartTakenHook = hook;
     }
 
     private Alarm getRefreshPsiFileAlarm() {
