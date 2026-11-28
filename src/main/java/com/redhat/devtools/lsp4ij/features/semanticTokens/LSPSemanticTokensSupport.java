@@ -12,6 +12,7 @@ package com.redhat.devtools.lsp4ij.features.semanticTokens;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.redhat.devtools.lsp4ij.LSPRequestConstants;
 import com.redhat.devtools.lsp4ij.LanguageServerItem;
 import com.redhat.devtools.lsp4ij.features.AbstractLSPDocumentFeatureSupport;
@@ -21,16 +22,21 @@ import com.redhat.devtools.lsp4ij.internal.CompletableFutures;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.eclipse.lsp4j.SemanticTokensParams;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.isDoneNormally;
 
@@ -51,7 +57,14 @@ import static com.redhat.devtools.lsp4ij.internal.CompletableFutures.isDoneNorma
  */
 public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<SemanticTokensParams, SemanticTokensData> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LSPSemanticTokensSupport.class);
+
     private static final SemanticTokensLegend DEFAULT_LEGEND;
+
+    // How many times a request that the language server cancelled itself, or whose content it found modified, is sent
+    // again, and the delay before the first time, which doubles each time
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_DELAY_MILLIS = 100;
 
     static {
         DEFAULT_LEGEND = new SemanticTokensLegend();
@@ -212,33 +225,98 @@ public class LSPSemanticTokensSupport extends AbstractLSPDocumentFeatureSupport<
                                                                         @NotNull PsiFile file,
                                                                         @NotNull LanguageServerItem languageServer,
                                                                         @NotNull CancellationSupport cancellationSupport) {
+        // The parameters of this language server, with the Uri of the file it knows, which its retries reuse
+        var serverParams = new SemanticTokensParams(new TextDocumentIdentifier());
+        serverParams.setWorkDoneToken(params.getWorkDoneToken());
+        serverParams.setPartialResultToken(params.getPartialResultToken());
         // Update textDocument Uri with custom file Uri if needed
-        updateTextDocumentUri(params.getTextDocument(), file, languageServer);
-        CompletableFuture<SemanticTokens> request = languageServer
-                .getTextDocumentService()
-                .semanticTokensFull(params);
+        updateTextDocumentUri(serverParams.getTextDocument(), file, languageServer);
+        return getSemanticTokensFor(serverParams, languageServer, cancellationSupport, 0);
+    }
+
+    /**
+     * Sends the given semantic tokens request to the given language server, and sends it again, after a delay which
+     * doubles each time, at most {@value #MAX_RETRIES} times, while the language server cancels it itself
+     * (ServerCancelled), as the client declares <code>serverCancelSupport</code>, or because its content was modified
+     * (ContentModified): the LSP specification asks the client to send such a request again.
+     */
+    private static CompletableFuture<ServerAnswer> getSemanticTokensFor(@NotNull SemanticTokensParams params,
+                                                                        @NotNull LanguageServerItem languageServer,
+                                                                        @NotNull CancellationSupport cancellationSupport,
+                                                                        int retries) {
+        CompletableFuture<SemanticTokens> request;
         CompletableFuture<SemanticTokens> answer;
         try {
+            request = languageServer
+                    .getTextDocumentService()
+                    .semanticTokensFull(params);
             answer = cancellationSupport.execute(request, languageServer, LSPRequestConstants.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL);
         } catch (CancellationException e) {
             // The request has been cancelled before it was sent (a ProcessCanceledException is one)
+            return CompletableFuture.completedFuture(ServerAnswer.NO_ANSWER);
+        } catch (RuntimeException e) {
+            // The request could not be sent, as when the language server stopped meanwhile: the next pass asks again
+            LOGGER.debug("Could not send a semantic tokens request to the language server '{}'",
+                    languageServer.getServerDefinition().getDisplayName(), e);
             return CompletableFuture.completedFuture(ServerAnswer.NO_ANSWER);
         }
         return answer.handleAsync((semanticTokens, error) -> {
             if (error != null || !isDoneNormally(request)) {
                 // The language server hasn't answered: CancellationSupport has reported its error, if any,
                 // and completed with null instead
-                return isAnsweredWithError(request) ? ServerAnswer.ERROR : ServerAnswer.NO_ANSWER;
+                if (retries < MAX_RETRIES && isToBeSentAgain(request) && !cancellationSupport.isCanceled()) {
+                    return sendAgain(params, languageServer, cancellationSupport, retries);
+                }
+                return CompletableFuture.completedFuture(isAnsweredWithError(request) ? ServerAnswer.ERROR : ServerAnswer.NO_ANSWER);
             }
             if (semanticTokens == null) {
                 // textDocument/semanticTokens/full may return null
-                return new ServerAnswer(null, AnswerStatus.ANSWERED);
+                return CompletableFuture.completedFuture(new ServerAnswer(null, AnswerStatus.ANSWERED));
             }
-            return new ServerAnswer(new SemanticTokensData(semanticTokens,
+            return CompletableFuture.completedFuture(new ServerAnswer(new SemanticTokensData(semanticTokens,
                     getLegend(languageServer),
                     languageServer.getSemanticTokensColorsProvider(),
-                    languageServer.getClientFeatures().getSemanticTokensFeature()), AnswerStatus.ANSWERED);
-        });
+                    languageServer.getClientFeatures().getSemanticTokensFeature()), AnswerStatus.ANSWERED));
+        }).thenCompose(Function.identity());
+    }
+
+    /**
+     * Sends the given semantic tokens request again, once the delay of the given retry is over, unless the client has
+     * cancelled it meanwhile, as an edit or a refresh does, whose highlighting asks again itself.
+     */
+    private static CompletableFuture<ServerAnswer> sendAgain(@NotNull SemanticTokensParams params,
+                                                             @NotNull LanguageServerItem languageServer,
+                                                             @NotNull CancellationSupport cancellationSupport,
+                                                             int retries) {
+        var answer = new CompletableFuture<ServerAnswer>();
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+            if (cancellationSupport.isCanceled()) {
+                answer.complete(ServerAnswer.NO_ANSWER);
+                return;
+            }
+            getSemanticTokensFor(params, languageServer, cancellationSupport, retries + 1)
+                    .whenComplete((serverAnswer, error) -> answer.complete(error == null ? serverAnswer : ServerAnswer.NO_ANSWER));
+        }, RETRY_DELAY_MILLIS << retries, TimeUnit.MILLISECONDS);
+        return answer;
+    }
+
+    /**
+     * Returns true if the given failed request is to be sent again: the language server cancelled it itself
+     * (ServerCancelled), or answered that its content was modified (ContentModified), and false otherwise.
+     */
+    private static boolean isToBeSentAgain(@NotNull CompletableFuture<?> request) {
+        if (!request.isCompletedExceptionally() || request.isCancelled()) {
+            return false;
+        }
+        try {
+            request.join();
+            return false;
+        } catch (CompletionException e) {
+            return e.getCause() instanceof ResponseErrorException error
+                    && (CancellationUtil.isServerCancelled(error) || CancellationUtil.isContentModified(error));
+        } catch (CancellationException e) {
+            return false;
+        }
     }
 
     /**

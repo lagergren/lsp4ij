@@ -46,6 +46,17 @@ public final class CancellationUtil {
         return isResponseErrorCode(responseErrorException, ResponseErrorCode.RequestCancelled, ResponseErrorCode.ServerCancelled);
     }
 
+    /**
+     * Returns true if the given error is the one of a request that the language server cancelled itself
+     * (ServerCancelled), which a client that declares <code>serverCancelSupport</code> asks again, and false otherwise.
+     *
+     * @param responseErrorException the error.
+     * @return true if the given error is the one of a request that the language server cancelled itself.
+     */
+    public static boolean isServerCancelled(@NotNull ResponseErrorException responseErrorException) {
+        return isResponseErrorCode(responseErrorException, ResponseErrorCode.ServerCancelled);
+    }
+
     public static boolean isContentModified(@NotNull ResponseErrorException responseErrorException) {
         return isResponseErrorCode(responseErrorException, ResponseErrorCode.ContentModified);
     }

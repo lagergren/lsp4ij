@@ -34,7 +34,8 @@ import java.util.function.Function;
 /**
  * The semantic colors of a file when the language server answers a <code>textDocument/semanticTokens</code> request
  * with an error, or when the request is cancelled: the file keeps the colors it shows, where their text is unchanged.
- * The next highlighting pass asks again for a cancelled request, and the next edit for an error.
+ * The next highlighting pass asks again for a cancelled request, and the next edit for an error. A request that the
+ * language server cancelled itself, or whose content it found modified, is sent again a few times.
  */
 public class SemanticTokensAnswersTest extends LSPCodeInsightFixtureTestCase {
 
@@ -165,6 +166,45 @@ public class SemanticTokensAnswersTest extends LSPCodeInsightFixtureTestCase {
         assertEquals(2, requests().size());
         // The next highlighting pass asks again
         assertEquals(List.of("4-7:LSP_FUNCTION"), rehighlight());
+    }
+
+    public void testARequestThatTheServerCancelledIsSentAgain() {
+        startServer(request -> request.number() == 1
+                ? CompletableFuture.failedFuture(error(ResponseErrorCode.ServerCancelled))
+                : CompletableFuture.completedFuture(TOKENS));
+        myFixture.configureByText(FILE_NAME, TEXT);
+
+        assertEquals("The tokens show without an edit", List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), semanticHighlights());
+        assertEquals(2, requests().size());
+    }
+
+    public void testARequestWhoseContentWasModifiedIsSentAgain() {
+        startServer(request -> request.number() <= 2
+                ? CompletableFuture.failedFuture(error(ResponseErrorCode.ContentModified))
+                : CompletableFuture.completedFuture(TOKENS));
+        myFixture.configureByText(FILE_NAME, TEXT);
+
+        assertEquals("The tokens show without an edit", List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), semanticHighlights());
+        assertEquals(3, requests().size());
+    }
+
+    public void testARequestIsSentAgainAFewTimesOnly() {
+        startServer(request -> CompletableFuture.failedFuture(error(ResponseErrorCode.ServerCancelled)));
+        myFixture.configureByText(FILE_NAME, TEXT);
+
+        assertEquals(List.of(), semanticHighlights());
+        assertEquals("The request is sent, and sent again three times", 4, requests().size());
+        // The request has no answer, and the next highlighting pass asks again, without an edit
+        assertEquals(List.of(), rehighlight());
+        assertEquals(8, requests().size());
+    }
+
+    public void testAFailedRequestIsNotSentAgain() {
+        startServer(request -> CompletableFuture.failedFuture(error(ResponseErrorCode.InternalError)));
+        myFixture.configureByText(FILE_NAME, TEXT);
+
+        assertEquals(List.of(), semanticHighlights());
+        assertEquals("An error other than a cancellation by the server is not sent again", 1, requests().size());
     }
 
     public void testAnswerWithoutTokensRemovesTheColors() {
