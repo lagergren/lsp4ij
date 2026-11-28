@@ -1,0 +1,9 @@
+{
+  "type": "gdb",
+  "name": "Launch program",
+  "request": "launch",
+  "program": "${file}",
+  "args": [],
+  "cwd": "${workspaceFolder}",
+  "stopAtBeginningOfMainSubprogram": false
+}

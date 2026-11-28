@@ -1,0 +1,33 @@
+{
+  "id": "gdb",
+  "name": "GDB",
+  "executeOnStartServer": false,
+  "check": {
+    "exec": {
+      "name": "Trying current command",
+      "command": "${server.command}",
+      "timeout": 2000,
+      "onSuccess": {
+        "initialize": {
+          "name": "Check that GDB starts its debug adapter"
+        }
+      },
+      "onFail": {
+        "showMessage": {
+          "name": "GDB with its debug adapter not found",
+          "content": [
+            "Install <a href=\"https://sourceware.org/gdb/\">GDB</a> 16 or later, built with Python, as Linux distributions and MSYS2 build it, and make sure <code>gdb</code> is in your PATH. Its <a href=\"https://sourceware.org/gdb/current/onlinedocs/gdb.html/Debug-Adapter-Protocol.html\">debug adapter</a> starts with <code>gdb -i dap</code>.",
+            "For Ada, the GDB of GNAT has it too. Then restart your IDE."
+          ]
+        }
+      }
+    }
+  },
+  "run": {
+    "configureServer": {
+      "name": "Configure GDB command",
+      "command": "gdb -i dap",
+      "update": true
+    }
+  }
+}

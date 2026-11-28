@@ -160,8 +160,8 @@ public class InstallerTaskRegistryInitializeTest {
     /**
      * The bundled installers which checked with an {@code exec} of {@code ${server.command}}, which a server that hangs
      * passes, still do, and then check with {@code initialize}, as its {@code onSuccess}. {@code initialize} is nowhere
-     * else: the debug adapters which LSP4IJ attaches to, as debugpy and rdbg, have no command, and check that their
-     * debugger is installed with its own {@code --version}.
+     * else: the debug adapters which LSP4IJ attaches to, as debugpy and rdbg, check that their debugger is installed
+     * with its own {@code --version}.
      */
     @Test
     public void testTheBundledInstallersCheckWithInitializeOnceTheServerCommandRuns() throws IOException {
@@ -180,7 +180,7 @@ public class InstallerTaskRegistryInitializeTest {
         for (var template : List.of("lsp/astro-ls", "lsp/candor-lsp", "lsp/dart-lsp", "lsp/eo-lsp-server", "lsp/metals",
                 "lsp/ruby-lsp", "lsp/sdl-lsp", "lsp/sourcekit-lsp", "lsp/stylelint-lsp", "lsp/svelte-language-server",
                 "lsp/sysml-lsp", "lsp/typescript-language-server", "lsp/vscode-css-language-server",
-                "lsp/vscode-eslint-language-server", "lsp/vue-js-language-server", "dap/go-delve")) {
+                "lsp/vscode-eslint-language-server", "lsp/vue-js-language-server", "dap/gdb", "dap/go-delve")) {
             expected.put(template, List.of(EXEC_THEN_INITIALIZE));
         }
         expected.put("lsp/gopls", List.of(EXEC_THEN_INITIALIZE, EXEC_THEN_INITIALIZE));

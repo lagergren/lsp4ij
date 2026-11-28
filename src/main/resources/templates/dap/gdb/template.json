@@ -1,0 +1,47 @@
+{
+  "id": "gdb",
+  "name": "GDB",
+  "launch": {
+    "default": "gdb -i dap"
+  },
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "Ada",
+        "patterns": [
+          "*.adb",
+          "*.ads",
+          "*.ada"
+        ]
+      }
+    },
+    {
+      "fileType": {
+        "name": "Fortran",
+        "patterns": [
+          "*.f",
+          "*.for",
+          "*.f90",
+          "*.f95",
+          "*.f03",
+          "*.f08"
+        ]
+      }
+    },
+    {
+      "fileType": {
+        "name": "C++",
+        "patterns": [
+          "*.c",
+          "*.h",
+          "*.cpp",
+          "*.cc",
+          "*.cxx",
+          "*.hpp",
+          "*.hh",
+          "*.hxx"
+        ]
+      }
+    }
+  ]
+}
