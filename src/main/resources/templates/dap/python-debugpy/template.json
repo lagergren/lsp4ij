@@ -1,6 +1,10 @@
 {
   "id": "python-debugpy",
   "name": "Python - Debugpy",
+  "launch": {
+    "windows": "python -m debugpy.adapter",
+    "default": "python3 -m debugpy.adapter"
+  },
   "attach": {
     "address": "$connect.host",
     "port": "$connect.port"

@@ -51,8 +51,9 @@ if __name__ == "__main__":
 
  ![Select New server](../images/python-debugpy/select_new_server.png)
 
-As [Debugpy](https://github.com/microsoft/debugpy) DAP server is consumed with [attach request](#configure-the-python-file-to-rundebug-with-attach),
-the command is empty.
+The command, `python3 -m debugpy.adapter` (`python -m debugpy.adapter` on Windows), starts the DAP server of Debugpy for
+the [launch configuration](#launch-the-python-file). The [attach configuration](#configure-the-python-file-to-rundebug-with-attach)
+doesn't use it: it connects to a program which Debugpy already runs.
 
 8. Enable DAP server traces
 
@@ -70,6 +71,27 @@ To allows settings breakpoints to Python files, you need configure mappings in t
 As you have selected `Python - Debugpy` server, it will automatically populate the file mappings like this:
 
 ![File mappings](../images/python-debugpy/file_mappings.png)
+
+## Launch the Python file
+
+To start the Python file from the debug session, select `Launch` in the `Configuration` tab, and the `Launch Python file`
+configuration:
+
+```json
+{
+  "name": "Launch Python file",
+  "type": "python",
+  "request": "launch",
+  "program": "${file}",
+  "cwd": "${workspaceFolder}",
+  "console": "internalConsole",
+  "justMyCode": true
+}
+```
+
+The DAP server, started with the command, runs the `File` of the `Configuration` tab with the Python that runs Debugpy,
+and its output goes to the console of the debug session. To run it with another Python, as the one of a virtual
+environment, set its path as the `python` of the configuration, or start the command with it.
 
 ## Configure the Python file to run/debug with attach
 

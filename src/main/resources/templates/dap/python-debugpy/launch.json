@@ -1,0 +1,9 @@
+{
+  "name": "Launch Python file",
+  "type": "python",
+  "request": "launch",
+  "program": "${file}",
+  "cwd": "${workspaceFolder}",
+  "console": "internalConsole",
+  "justMyCode": true
+}
