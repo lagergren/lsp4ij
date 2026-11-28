@@ -14,6 +14,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -34,12 +35,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * A language server's <code>workspace/semanticTokens/refresh</code> shows its new semantic tokens without an edit,
  * promptly: it doesn't wait for the debounce of the restarts of the highlighting that other features ask for, and the
- * refreshes of other features can't postpone it. The daemon of the test highlights the editor as the IDE does, by its
- * timer, and the test waits for the new tokens to show.
+ * refreshes of other features can't postpone it. While its answer is pending, the file keeps its colors, and a write
+ * action runs. The daemon of the test highlights the editor as the IDE does, by its timer, and the test waits for the
+ * new tokens to show.
  */
 public class SemanticTokensRefreshTest extends LSPCodeInsightFixtureTestCase {
 
     private static final String FILE_NAME = "test.luax";
+
+    // Only ends a hang
+    private static final long HANG_SECONDS = 30;
 
     private static final String TEXT = "foo bar\n";
 
@@ -99,12 +104,55 @@ public class SemanticTokensRefreshTest extends LSPCodeInsightFixtureTestCase {
         });
     }
 
+    public void testAPendingAnswerKeepsTheColorsAndLetsAWriteActionRun() throws Exception {
+        var answer = new CompletableFuture<SemanticTokens>();
+        MockLanguageServer.INSTANCE.getTextDocumentService().setSemanticTokensProcessor(request ->
+                request.number() == 1 ? CompletableFuture.completedFuture(TOKENS) : answer);
+        // Only ends a hang: a write action that waits for the answer gets it then, and the test fails
+        var hang = AppExecutorUtil.getAppScheduledExecutorService()
+                .schedule(() -> answer.complete(NEW_TOKENS), HANG_SECONDS, TimeUnit.SECONDS);
+        myFixture.configureByText(FILE_NAME, TEXT);
+        assertEquals(List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), semanticHighlights(myFixture.doHighlighting()));
+
+        try {
+            whileTheDaemonRuns(() -> {
+                client().refreshSemanticTokens();
+                var requests = MockLanguageServer.INSTANCE.getTextDocumentService().getSemanticTokensRequests();
+                PlatformTestUtil.waitWithEventsDispatching("the refreshed highlighting must ask for the semantic tokens",
+                        () -> requests.size() == 2, IN_MEMORY_TIMEOUT_SECONDS);
+                assertEquals("The colors stay while the answer is pending",
+                        List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), currentSemanticHighlights());
+
+                // The highlighting waits for the answer in a read action, which a write action cancels
+                long start = System.nanoTime();
+                WriteAction.run(() -> {});
+                long waited = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+                assertFalse("The write action waited for the answer", answer.isDone());
+                assertTrue("The write action waited " + waited + " ms", waited < TimeUnit.SECONDS.toMillis(HANG_SECONDS));
+                PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+                assertEquals("The colors stay after the write action",
+                        List.of("0-3:LSP_FUNCTION", "4-7:LSP_KEYWORD"), currentSemanticHighlights());
+
+                // The answer shows without an edit
+                answer.complete(NEW_TOKENS);
+                waitForTheNewTokens();
+            });
+        } finally {
+            hang.cancel(false);
+        }
+    }
+
     private void waitForTheNewTokens() {
-        var document = myFixture.getEditor().getDocument();
         PlatformTestUtil.waitWithEventsDispatching("the refresh must show the new semantic tokens without an edit",
-                () -> List.of("4-7:LSP_FUNCTION").equals(semanticHighlights(
-                        DaemonCodeAnalyzerImpl.getHighlights(document, null, myFixture.getProject()))),
-                IN_MEMORY_TIMEOUT_SECONDS);
+                () -> List.of("4-7:LSP_FUNCTION").equals(currentSemanticHighlights()), IN_MEMORY_TIMEOUT_SECONDS);
+    }
+
+    /**
+     * Returns the semantic highlights that the editor shows.
+     */
+    private List<String> currentSemanticHighlights() {
+        var document = myFixture.getEditor().getDocument();
+        return semanticHighlights(DaemonCodeAnalyzerImpl.getHighlights(document, null, myFixture.getProject()));
     }
 
     /**
