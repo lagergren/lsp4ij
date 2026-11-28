@@ -1,0 +1,7 @@
+{
+  "type": "coreclr",
+  "name": "Attach to a .NET process",
+  "request": "attach",
+  "processId": 12345,
+  "port": 4711
+}

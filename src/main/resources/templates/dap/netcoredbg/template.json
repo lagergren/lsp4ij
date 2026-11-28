@@ -1,0 +1,39 @@
+{
+  "id": "netcoredbg",
+  "name": "netcoredbg (.NET)",
+  "launch": {
+    "windows": "<<insert base directory>>/netcoredbg.exe --interpreter=vscode",
+    "default": "<<insert base directory>>/netcoredbg --interpreter=vscode"
+  },
+  "attach": {
+    "port": "$port"
+  },
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "C#",
+        "patterns": [
+          "*.cs"
+        ]
+      }
+    },
+    {
+      "fileType": {
+        "name": "F#",
+        "patterns": [
+          "*.fs",
+          "*.fsi",
+          "*.fsx"
+        ]
+      }
+    },
+    {
+      "fileType": {
+        "name": "VB.NET",
+        "patterns": [
+          "*.vb"
+        ]
+      }
+    }
+  ]
+}

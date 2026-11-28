@@ -1,0 +1,9 @@
+{
+  "type": "coreclr",
+  "name": "Launch .NET program",
+  "request": "launch",
+  "program": "${file}",
+  "args": [],
+  "cwd": "${workspaceFolder}",
+  "stopAtEntry": false
+}

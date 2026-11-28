@@ -1,0 +1,77 @@
+{
+  "id": "netcoredbg",
+  "name": "netcoredbg (.NET)",
+  "properties": {
+    "serverDist": "$USER_HOME$/.lsp4ij/dap/netcoredbg"
+  },
+  "check": {
+    "fileExists": {
+      "name": "Check if netcoredbg is installed",
+      "file": {
+        "windows": "${serverDist}/netcoredbg.exe",
+        "default": "${serverDist}/netcoredbg"
+      },
+      "onSuccess": {
+        "replaceTemplateCommand": {
+          "name": "Configure netcoredbg command",
+          "templateCommand": {
+            "windows": "<<insert base directory>>/netcoredbg.exe --interpreter=vscode",
+            "default": "<<insert base directory>>/netcoredbg --interpreter=vscode"
+          },
+          "command": "\"${check.file}\" --interpreter=vscode"
+        }
+      }
+    }
+  },
+  "run": {
+    "download": {
+      "name": "Download netcoredbg",
+      "github": {
+        "owner": "Samsung",
+        "repository": "netcoredbg",
+        "prerelease": false,
+        "asset": {
+          "windows": "netcoredbg-win64.zip",
+          "unix": {
+            "x86_64": "netcoredbg-linux-amd64.tar.gz",
+            "arm64": "netcoredbg-linux-arm64.tar.gz"
+          },
+          "mac": {
+            "x86_64": "netcoredbg-osx-amd64.tar.gz",
+            "arm64": "netcoredbg-osx-arm64.zip"
+          }
+        }
+      },
+      "url": {
+        "windows": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-win64.zip",
+        "unix": {
+          "x86_64": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-linux-amd64.tar.gz",
+          "arm64": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-linux-arm64.tar.gz"
+        },
+        "mac": {
+          "x86_64": "https://github.com/Samsung/netcoredbg/releases/download/3.1.3-1062/netcoredbg-osx-amd64.tar.gz",
+          "arm64": "https://github.com/Samsung/netcoredbg/releases/download/3.2.0-1092/netcoredbg-osx-arm64.zip"
+        }
+      },
+      "output": {
+        "dir": "${serverDist}",
+        "stripRootFolder": true,
+        "file": {
+          "name": {
+            "windows": "netcoredbg.exe",
+            "unix": "netcoredbg",
+            "mac": "netcoredbg"
+          },
+          "executable": true
+        }
+      },
+      "onSuccess": {
+        "configureServer": {
+          "name": "Configure netcoredbg command",
+          "command": "\"${output.dir}/${output.file.name}\" --interpreter=vscode",
+          "update": true
+        }
+      }
+    }
+  }
+}
