@@ -26,6 +26,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
@@ -62,6 +63,11 @@ public class DownloadUtils {
         @Nullable
         Path decompress(@NotNull Path filePath, @NotNull Path targetDir) throws IOException;
     }
+
+    /**
+     * The folder of the metadata of the files, which macOS adds to the zips it makes.
+     */
+    private static final String MACOS_METADATA_FOLDER = "__MACOSX";
 
     private static final DecompressSupport ZIP = DownloadUtils::decompressZip;
     private static final DecompressSupport TAR = DownloadUtils::decompressTar;
@@ -117,10 +123,16 @@ public class DownloadUtils {
                     if (entryName == null || entryName.isEmpty()) return false;
                     // The top level of ./bin/server, an entry of a tar made of the folder ".", as the one of cpp_ls, is
                     // bin, and the entry ./ has none: "." is never the root folder of the archive (#2139)
-                    Arrays.stream(entryName.replace("\\", "/").split("/"))
+                    Optional<String> top = Arrays.stream(entryName.replace("\\", "/").split("/"))
                             .filter(part -> !part.isEmpty() && !part.equals("."))
-                            .findFirst()
-                            .ifPresent(topLevel::add);
+                            .findFirst();
+                    if (top.filter(MACOS_METADATA_FOLDER::equals).isPresent()) {
+                        // The __MACOSX folder, which macOS adds to the zips it makes, as to the one of netcoredbg 3.2.0
+                        // for macOS, holds the metadata of the files, not files of the archive: it is neither
+                        // extracted nor a root folder
+                        return false;
+                    }
+                    top.ifPresent(topLevel::add);
                     return true;
                 })
                 .extract(targetDir);

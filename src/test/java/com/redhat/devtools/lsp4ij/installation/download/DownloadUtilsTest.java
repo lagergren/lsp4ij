@@ -26,13 +26,18 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Tests the extraction of the downloaded archives: a {@code .gz}, as rust-analyzer's on Linux and macOS, extracts over
- * the file of an earlier install, and a {@code .tar.xz} or {@code .txz} extracts the tar that it holds.
+ * the file of an earlier install, a {@code .tar.xz} or {@code .txz} extracts the tar that it holds, and the
+ * {@code __MACOSX} folder of a zip made on macOS is neither extracted nor a root folder.
  */
 public class DownloadUtilsTest {
 
@@ -97,6 +102,30 @@ public class DownloadUtilsTest {
         assertExtracts(asset, "server-1.0", Map.of("a", "a", "b", "b"));
     }
 
+    /**
+     * The zip of netcoredbg 3.2.0 for macOS has the folder netcoredbg, and the folder __MACOSX of the metadata of its
+     * files, which macOS adds to the zips it makes: netcoredbg is the root folder, whose content stripRootFolder moves.
+     */
+    @Test
+    void theMacOSMetadataFolderOfAZipIsNeitherExtractedNorARootFolder() throws IOException {
+        Path asset = dir.resolve("netcoredbg-osx-arm64.zip");
+        Files.write(asset, zip(Map.of("netcoredbg/netcoredbg", "netcoredbg", "netcoredbg/libdbgshim.dylib", "dbgshim",
+                "__MACOSX/netcoredbg/._netcoredbg", "metadata")));
+
+        assertExtracts(asset, "netcoredbg", Map.of("netcoredbg", "netcoredbg", "libdbgshim.dylib", "dbgshim"));
+        assertFalse(Files.exists(dir.resolve("output").resolve("__MACOSX")), "the metadata of macOS is not extracted");
+    }
+
+    @Test
+    void aZipWithTwoFoldersHasNoRootFolder() throws IOException {
+        Path asset = dir.resolve("server.zip");
+        Files.write(asset, zip(Map.of("bin/server", "server", "lib/server.jar", "jar")));
+        Path outputDir = Files.createDirectories(dir.resolve("output"));
+
+        assertNull(decompress(asset, outputDir));
+        assertEquals("server", Files.readString(outputDir.resolve("bin/server")));
+    }
+
     private void assertExtracts(@NotNull Path asset,
                                 @NotNull String root,
                                 @NotNull Map<String, String> files) throws IOException {
@@ -130,6 +159,21 @@ public class DownloadUtilsTest {
                 tar.putArchiveEntry(entry);
                 tar.write(content);
                 tar.closeArchiveEntry();
+            }
+        }
+        return bytes.toByteArray();
+    }
+
+    /**
+     * Returns a zip of the given files, sorted by name, with their content.
+     */
+    private static byte[] zip(@NotNull Map<String, String> files) throws IOException {
+        var bytes = new ByteArrayOutputStream();
+        try (var zip = new ZipOutputStream(bytes)) {
+            for (String name : files.keySet().stream().sorted().toList()) {
+                zip.putNextEntry(new ZipEntry(name));
+                zip.write(files.get(name).getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
             }
         }
         return bytes.toByteArray();
