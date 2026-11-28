@@ -37,6 +37,27 @@
           "*.tsx"
         ]
       }
+    },
+    {
+      "fileType": {
+        "patterns": [
+          "*.svelte"
+        ]
+      }
+    },
+    {
+      "fileType": {
+        "patterns": [
+          "*.vue"
+        ]
+      }
+    },
+    {
+      "fileType": {
+        "patterns": [
+          "*.astro"
+        ]
+      }
     }
   ]
 }

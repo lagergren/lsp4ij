@@ -213,6 +213,34 @@ TypeScript debugging should be available:
 
 ![Debugging TypeScript](../images/vscode-js-debug/debug_ts.png)
 
+## Debug a web application in Chrome
+
+The template also sets breakpoints in Svelte (`*.svelte`), Vue (`*.vue`) and Astro (`*.astro`) files, whose client code
+runs in the browser, and has the launch configuration `Launch Chrome`:
+
+```json
+{
+  "type": "pwa-chrome",
+  "name": "Launch Chrome",
+  "request": "launch",
+  "url": "http://localhost:5173",
+  "webRoot": "${workspaceFolder}"
+}
+```
+
+1. Start the development server of the application, as `npm run dev`. `http://localhost:5173` is the address of the
+   development server of Vite, which Svelte and Vue projects use; set the `url` to the address of yours, as
+   `http://localhost:4321` for Astro.
+
+2. In the `Configuration` tab, select the `Launch Chrome` configuration, and debug it. VSCode JS Debug starts Chrome with
+   a profile of its own, opens the `url`, and finds the files of the `webRoot` that the scripts of the page come from
+   with their source maps, so that the breakpoints of the `.svelte`, `.vue`, `.astro`, `.ts` and `.js` files bind.
+
+To debug with another Chromium browser, as Microsoft Edge, set its program as the `runtimeExecutable`, or use the type
+`pwa-msedge`. See the
+[options of VSCode JS Debug](https://github.com/microsoft/vscode-js-debug/blob/main/OPTIONS.md#pwa-chrome-launch) for the
+others.
+
 ## Language Support
 
 If you need language support for TypeScript/JavaScript (completion, validation, etc.), you can [configure the TypeScript Language Server](../../user-defined-ls/typescript-language-server.md).

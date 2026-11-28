@@ -1,0 +1,7 @@
+{
+  "type": "pwa-chrome",
+  "name": "Launch Chrome",
+  "request": "launch",
+  "url": "http://localhost:5173",
+  "webRoot": "${workspaceFolder}"
+}
