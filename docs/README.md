@@ -98,7 +98,7 @@ its debug adapter.
 
 | Template                                                                     | For                         |
 |------------------------------------------------------------------------------|-----------------------------|
-| [CodeLLDB](./dap/user-defined-dap/codelldb.md)                               | Rust, C and C++             |
+| [CodeLLDB](./dap/user-defined-dap/codelldb.md)                               | Rust, C, C++ and Zig        |
 | [Docker: Dockerfile Build Debugging](./dap/user-defined-dap/buildx-dockerfile.md) | the build of a Dockerfile |
 | [Erlang edb DAP server](./dap/user-defined-dap/erlang-edb.md)                | Erlang                      |
 | [Go Delve DAP server](./dap/user-defined-dap/go-delve.md)                    | Go                          |

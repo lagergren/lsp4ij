@@ -61,9 +61,8 @@ tokens of ZLS. For TextMate highlighting too, add the grammar of
 
 ## Debugging
 
-To debug a Zig program, use the [CodeLLDB](../dap/user-defined-dap/codelldb.md) debug adapter template. It maps only
-Rust files, so add `*.zig` in its `Mappings` tab, as its page says for C and C++, to set breakpoints in Zig files, and
-set the program that `zig build` makes, such as `zig-out/bin/<name>`, in its configuration.
+To debug a Zig program, use the [CodeLLDB](../dap/user-defined-dap/codelldb.md#zig-application) debug adapter
+template, which maps Zig files and has a `Launch Zig program` configuration.
 
 To install `zls` yourself, download and extract the asset of your OS from the
 [ZLS releases](https://github.com/zigtools/zls/releases), or use your package manager, and set its path in the command,

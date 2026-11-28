@@ -21,6 +21,14 @@
           "*.rast"
         ]
       }
+    },
+    {
+      "fileType": {
+        "name": "Zig",
+        "patterns": [
+          "*.zig"
+        ]
+      }
     }
   ]
 }

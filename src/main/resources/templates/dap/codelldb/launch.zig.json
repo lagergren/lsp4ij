@@ -1,0 +1,7 @@
+{
+  "type": "lldb",
+  "name": "Launch Zig program",
+  "request": "launch",
+  "program": "${file}",
+  "cwd": "${workspaceFolder}"
+}

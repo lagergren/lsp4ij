@@ -1,6 +1,6 @@
 # CodeLLDB
 
-To debug a [Rust application](#rust-application) or [C++ application](#c-application), you can use the [CodeLLDB](https://github.com/vadimcn/codelldb) DAP server.
+To debug a [Rust application](#rust-application), a [C++ application](#c-application) or a [Zig application](#zig-application), you can use the [CodeLLDB](https://github.com/vadimcn/codelldb) DAP server.
 
 # Rust Application
 
@@ -151,7 +151,7 @@ If you need language support for Rust (completion, validation, etc.), you can [c
 
 # C++ Application
 
-The `CodeLLDB` template maps only Rust files. To debug a C or C++ program built with debug information, such as with
+The `CodeLLDB` template maps Rust and Zig files. To debug a C or C++ program built with debug information, such as with
 `clang++ -g`, add its files in the [Mappings tab](#configure-file-mappings), for instance with the file name patterns
 `*.c`, `*.cpp` and `*.h`, so that you can set breakpoints in them. Then select the executable in the `File` field, as
 for a [Rust application](#configure-the-executable-to-rundebug).
@@ -159,4 +159,15 @@ for a [Rust application](#configure-the-executable-to-rundebug).
 ## Language Support
 
 If you need language support for C++ files (completion, validation, etc.), you can [configure the Clangd Language Server](../../user-defined-ls/clangd.md).
+
+# Zig Application
+
+The `CodeLLDB` template maps `*.zig` files, so that you can set breakpoints in them, and has a `Launch Zig program`
+configuration, which you select in `Use the configuration:` of the `Configuration` tab. Build the program with
+`zig build`, whose default `Debug` mode has the debug information, and select the executable that it makes, such as
+`zig-out/bin/<name>`, in the `File` field, as for a [Rust application](#configure-the-executable-to-rundebug).
+
+## Language Support
+
+If you need language support for Zig files (completion, validation, etc.), you can [configure the Zig Language Server (ZLS)](../../user-defined-ls/zls.md).
 
