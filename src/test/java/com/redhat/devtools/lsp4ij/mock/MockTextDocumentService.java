@@ -101,6 +101,17 @@ public class MockTextDocumentService implements TextDocumentService {
     private Function<RenameParams, WorkspaceEdit> renameProcessor;
     private List<DocumentSymbol> documentSymbols;
     private SemanticTokens mockSemanticTokens;
+
+    /**
+     * A textDocument/semanticTokens request this server read: its method, "full" or "range", its number, from 1 for the
+     * first request, and its range, which a full request has not.
+     */
+    public record SemanticTokensRequest(String method, int number, Range range) {}
+
+    // The textDocument/semanticTokens requests this server read, in order
+    private final List<SemanticTokensRequest> semanticTokensRequests = new CopyOnWriteArrayList<>();
+    // Answers the textDocument/semanticTokens requests, instead of the mock semantic tokens, when set
+    private volatile Function<SemanticTokensRequest, CompletableFuture<SemanticTokens>> semanticTokensProcessor;
     private List<FoldingRange> foldingRanges;
     private List<InlineValue> mockInlineValues;
     private final List<InlineValueParams> inlineValueRequests = new CopyOnWriteArrayList<>();
@@ -566,6 +577,8 @@ public class MockTextDocumentService implements TextDocumentService {
         this.codeActionRequests.set(0);
         this.lastCodeActionParams = null;
         this.codeActionGate = CompletableFuture.completedFuture(null);
+        this.semanticTokensRequests.clear();
+        this.semanticTokensProcessor = null;
         this.onTypeFormattingRequests.set(0);
         this.onTypeFormattingGate = CompletableFuture.completedFuture(null);
         this.resolveCompletionItemProcessor = null;
@@ -687,9 +700,38 @@ public class MockTextDocumentService implements TextDocumentService {
         this.mockSemanticTokens = semanticTokens;
     }
 
+    /**
+     * Answers the textDocument/semanticTokens requests with the given processor, instead of the mock semantic tokens, so
+     * that a test can delay, fail, cancel or change the answer of each request.
+     *
+     * @param semanticTokensProcessor the processor, which gets the request and gives its answer.
+     */
+    public void setSemanticTokensProcessor(Function<SemanticTokensRequest, CompletableFuture<SemanticTokens>> semanticTokensProcessor) {
+        this.semanticTokensProcessor = semanticTokensProcessor;
+    }
+
+    /**
+     * @return the textDocument/semanticTokens requests this server read, in order
+     */
+    public List<SemanticTokensRequest> getSemanticTokensRequests() {
+        return semanticTokensRequests;
+    }
+
     @Override
     public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-        return CompletableFuture.completedFuture(this.mockSemanticTokens);
+        return answerSemanticTokens("full", null);
+    }
+
+    @Override
+    public CompletableFuture<SemanticTokens> semanticTokensRange(SemanticTokensRangeParams params) {
+        return answerSemanticTokens("range", params.getRange());
+    }
+
+    private synchronized CompletableFuture<SemanticTokens> answerSemanticTokens(String method, Range range) {
+        var request = new SemanticTokensRequest(method, semanticTokensRequests.size() + 1, range);
+        semanticTokensRequests.add(request);
+        var processor = this.semanticTokensProcessor;
+        return processor != null ? processor.apply(request) : CompletableFuture.completedFuture(this.mockSemanticTokens);
     }
 
     @Override
