@@ -16,7 +16,10 @@
     "exec": {
       "name": "Install 'debugpy'",
       "ignoreStderr": true,
-      "command": "pip install debugpy"
+      "command": {
+        "windows": "python -m pip install debugpy",
+        "default": "python3 -m pip install debugpy"
+      }
     }
   }
 }

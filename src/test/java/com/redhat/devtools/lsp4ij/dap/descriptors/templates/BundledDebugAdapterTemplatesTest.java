@@ -10,8 +10,11 @@
  ******************************************************************************/
 package com.redhat.devtools.lsp4ij.dap.descriptors.templates;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
@@ -85,6 +88,27 @@ public class BundledDebugAdapterTemplatesTest extends BasePlatformTestCase {
         assertTrue(template.getOSProgramArgs(), template.getOSProgramArgs().endsWith(" -m debugpy.adapter"));
         assertEquals(List.of("Launch Python file"), names(template, DebugMode.LAUNCH));
         assertEquals(List.of("Attach"), names(template, DebugMode.ATTACH));
+    }
+
+    /**
+     * Debugpy's installer installs debugpy with the Python that its check and its launch command run, on each OS: a
+     * {@code pip} of another Python would install it where the launch doesn't find it.
+     */
+    public void testDebugpyInstallsWithThePythonOfItsCheckAndItsLaunch() {
+        var template = template("python-debugpy");
+        JsonObject installer = JsonParser.parseString(template.getInstallerConfiguration()).getAsJsonObject();
+        JsonObject check = installer.getAsJsonObject("check").getAsJsonObject("exec").getAsJsonObject("command");
+        JsonObject run = installer.getAsJsonObject("run").getAsJsonObject("exec").getAsJsonObject("command");
+        for (String os : List.of("windows", "default")) {
+            String python = interpreter(check.get(os).getAsString());
+            assertEquals(os, python + " -m pip install debugpy", run.get(os).getAsString());
+        }
+        String launchPython = interpreter(template.getOSProgramArgs());
+        assertEquals(SystemInfo.isWindows ? "python" : "python3", launchPython);
+    }
+
+    private static @NotNull String interpreter(@NotNull String command) {
+        return command.substring(0, command.indexOf(' '));
     }
 
     /**
