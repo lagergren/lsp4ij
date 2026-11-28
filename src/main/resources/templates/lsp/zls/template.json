@@ -1,0 +1,20 @@
+{
+  "id": "zls",
+  "name": "Zig Language Server (ZLS)",
+  "programArgs": {
+    "default": "zls"
+  },
+  "expandConfiguration": true,
+  "fileTypeMappings": [
+    {
+      "fileType": {
+        "name": "Zig",
+        "patterns": [
+          "*.zig",
+          "*.zon"
+        ]
+      },
+      "languageId": "zig"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "LSP4IJ/zls/settings.schema.json",
+  "title": "LSP4IJ Zig Language Server (ZLS) settings JSON schema",
+  "description": "JSON schema for the settings of ZLS 0.17.0, which it asks for in its zls section.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "zls.enable_snippets": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enables snippet completions when the client also supports them"
+    },
+    "zls.enable_argument_placeholders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to enable function argument placeholder completions"
+    },
+    "zls.completion_label_details": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to show the function signature in completion results. May improve readability in some editors when disabled"
+    },
+    "zls.enable_build_on_save": {
+      "type": "boolean",
+      "default": null,
+      "description": "Whether to enable build-on-save diagnostics. Will be automatically enabled if the `build.zig` has declared a 'check' step.\n\nFor more information, checkout the [Build-On-Save](https://zigtools.org/zls/guides/build-on-save/) Guide."
+    },
+    "zls.build_on_save_args": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "description": "Specify which arguments should be passed to Zig when running build-on-save.\n\nIf the `build.zig` has declared a 'check' step, it will be preferred over the default 'install' step."
+    },
+    "zls.semantic_tokens": {
+      "type": "string",
+      "default": "full",
+      "enum": [
+        "none",
+        "partial",
+        "full"
+      ],
+      "description": "Set level of semantic tokens. `partial` only includes information that requires semantic analysis."
+    },
+    "zls.inlay_hints_show_variable_type_hints": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable inlay hints for variable types"
+    },
+    "zls.inlay_hints_show_struct_literal_field_type": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable inlay hints for fields in struct and union literals"
+    },
+    "zls.inlay_hints_show_parameter_name": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable inlay hints for parameter names"
+    },
+    "zls.inlay_hints_show_builtin": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable inlay hints for builtin functions"
+    },
+    "zls.inlay_hints_exclude_single_argument": {
+      "type": "boolean",
+      "default": true,
+      "description": "Don't show inlay hints for single argument calls"
+    },
+    "zls.inlay_hints_hide_redundant_param_names": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hides inlay hints when parameter name matches the identifier (e.g. `foo: foo`)"
+    },
+    "zls.inlay_hints_hide_redundant_param_names_last_token": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hides inlay hints when parameter name matches the last token of a parameter node (e.g. `foo: bar.foo`, `foo: &foo`)"
+    },
+    "zls.force_autofix": {
+      "type": "boolean",
+      "default": false,
+      "description": "Work around editors that do not support 'source.fixall' code actions on save. This option may deliver a substandard user experience. Please refer to the installation guide to see which editors natively support code actions on save."
+    },
+    "zls.warn_style": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enables warnings for style guideline mismatches"
+    },
+    "zls.highlight_global_var_declarations": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to highlight global var declarations"
+    },
+    "zls.skip_std_references": {
+      "type": "boolean",
+      "default": false,
+      "description": "No longer used. May be brought back to configure how symbol references in the standard library should behave"
+    },
+    "zls.prefer_ast_check_as_child_process": {
+      "type": "boolean",
+      "default": true,
+      "description": "Favor using `zig ast-check` instead of the builtin one"
+    },
+    "zls.builtin_path": {
+      "type": "string",
+      "default": null,
+      "description": "Override the path to 'builtin' module. Automatically resolved if unset."
+    },
+    "zls.zig_lib_path": {
+      "type": "string",
+      "default": null,
+      "description": "Override the Zig library path. Will be automatically resolved using the 'zig_exe_path'."
+    },
+    "zls.zig_exe_path": {
+      "type": "string",
+      "default": null,
+      "description": "Specify the path to the Zig executable (not the directory). If unset, zig is looked up in `PATH`. e.g. `/path/to/zig-templeos-armless-1.0.0/zig`."
+    },
+    "zls.global_cache_path": {
+      "type": "string",
+      "default": null,
+      "description": "Path to a directory that will be used as zig's cache. Will default to `${KnownFolders.Cache}/zls`."
+    }
+  }
+}

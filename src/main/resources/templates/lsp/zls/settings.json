@@ -1,0 +1,8 @@
+{
+  "zls.enable_snippets": true,
+  "zls.enable_argument_placeholders": true,
+  "zls.semantic_tokens": "full",
+  "zls.inlay_hints_show_variable_type_hints": true,
+  "zls.inlay_hints_show_parameter_name": true,
+  "zls.warn_style": false
+}

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.TestApplicationManager;
 import com.redhat.devtools.lsp4ij.installation.CommandLineUpdater;
 import com.redhat.devtools.lsp4ij.installation.definition.tasks.*;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.XZOutputStream;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -478,6 +481,14 @@ public class InstallerTaskRegistryFileExistsTest {
     }
 
     @Test
+    public void testZlsDownloadGivesTheCommandOfTheZlsAtTheRootOfItsArchive() throws Exception {
+        // The archive of a ZLS release, a .tar.xz on Linux and macOS, has zls, its LICENSE and its README at its root
+        String zls = SystemInfo.isWindows ? "zls.exe" : "zls";
+        assertTheDownloadGivesTheCommand("lsp/zls", "zls-x86_64-linux.tar.xz", List.of(zls, "LICENSE", "README.md"),
+                zls, "", List.of());
+    }
+
+    @Test
     public void testErlangEdbGetsFromItsCheckTheCommandThatItsDownloadGivesIt() throws Exception {
         // The template has the command of an edb on the PATH; the archive of edb has the folder edb-<version>/, whose
         // content goes into the folder of the template, as the launcher edb finds its escripts next to it
@@ -829,6 +840,70 @@ public class InstallerTaskRegistryFileExistsTest {
     /**
      * Writes a {@code .tar.gz} of the given entries, each with its name as its content.
      */
+    /**
+     * Runs the download of the given template from a local archive with the given entries, as for a server without the
+     * command of the template on the PATH, and asserts the command that it gives the server: the given program, in the
+     * folder of the template, with the given arguments. The given other files must be installed next to it.
+     */
+    private void assertTheDownloadGivesTheCommand(String templatePath,
+                                                  String asset,
+                                                  List<String> entries,
+                                                  String program,
+                                                  String arguments,
+                                                  List<String> otherFiles) throws Exception {
+        Path serverDist = Files.createTempDirectory("lsp4ij-server-dist");
+        Path downloads = Files.createTempDirectory("lsp4ij-release");
+        try {
+            Path archive = downloads.resolve(asset);
+            if (asset.endsWith(".tar.gz")) {
+                writeTarGz(archive, entries);
+            } else if (asset.endsWith(".tar.xz")) {
+                writeTarXz(archive, entries);
+            } else {
+                fail("No archive of this kind: " + asset);
+            }
+            String dist = serverDist.toString().replace('\\', '/');
+            JsonObject json = JsonParser.parseString(
+                    Files.readString(Paths.get("src/main/resources/templates", templatePath, "installer.json")))
+                    .getAsJsonObject();
+            json.getAsJsonObject("properties").addProperty("serverDist", dist);
+            JsonObject download = json.getAsJsonObject("run").getAsJsonObject("download");
+            download.remove("github");
+            download.addProperty("url", archive.toUri().toString());
+            ServerInstallerDescriptor descriptor = createRegistry().loadInstaller(json.toString());
+
+            List<String> commands = new ArrayList<>();
+            assertTrue(execute(descriptor, descriptor.getRun(), commands), "The download should install " + templatePath);
+
+            Path installed = serverDist.resolve(program);
+            assertTrue(Files.isRegularFile(installed), installed + " should be installed");
+            if (!SystemInfo.isWindows) {
+                assertTrue(Files.isExecutable(installed), installed + " should be executable");
+            }
+            for (String file : otherFiles) {
+                assertTrue(Files.isRegularFile(serverDist.resolve(file)), file + " should be installed next to " + program);
+            }
+            assertEquals("\"" + dist + "/" + program + "\"" + arguments, commands.get(commands.size() - 1),
+                    "The download should give the server the command of what it installed: " + commands);
+        } finally {
+            NioFiles.deleteRecursively(serverDist);
+            NioFiles.deleteRecursively(downloads);
+        }
+    }
+
+    private static void writeTarXz(Path archive, List<String> entries) throws IOException {
+        try (var tar = new TarArchiveOutputStream(new XZOutputStream(Files.newOutputStream(archive), new LZMA2Options()))) {
+            for (String name : entries) {
+                byte[] content = name.getBytes(StandardCharsets.UTF_8);
+                var entry = new TarArchiveEntry(name);
+                entry.setSize(content.length);
+                tar.putArchiveEntry(entry);
+                tar.write(content);
+                tar.closeArchiveEntry();
+            }
+        }
+    }
+
     private static void writeTarGz(Path archive, List<String> entries) throws IOException {
         try (var tar = new TarArchiveOutputStream(new GZIPOutputStream(Files.newOutputStream(archive)))) {
             for (String name : entries) {

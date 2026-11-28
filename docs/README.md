@@ -80,6 +80,7 @@ it up. Most templates install their language server the first time it starts.
 | [TypeScript Language Server](./user-defined-ls/typescript-language-server.md)                  | TypeScript and JavaScript                                  |
 | [Vue.js Language Server](./user-defined-ls/vue-js-language-server.md)                          | Vue.js                                                     |
 | [WGSL Analyzer](./user-defined-ls/wgsl-analyzer.md)                                            | WGSL, the WebGPU shading language                          |
+| [Zig Language Server (ZLS)](./user-defined-ls/zls.md)                                          | Zig                                                        |
 
 ### Debug adapters
 

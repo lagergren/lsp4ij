@@ -1,0 +1,78 @@
+{
+  "id": "zls",
+  "name": "Zig Language Server (ZLS)",
+  "executeOnStartServer": false,
+  "properties": {
+    "serverDist": "$USER_HOME$/.lsp4ij/lsp/zls"
+  },
+  "check": {
+    "exec": {
+      "name": "Trying current command",
+      "command": "${server.command}",
+      "timeout": 2000,
+      "onSuccess": {
+        "initialize": {
+          "name": "Check that zls starts"
+        }
+      }
+    }
+  },
+  "run": {
+    "download": {
+      "name": "Download zls",
+      "github": {
+        "owner": "zigtools",
+        "repository": "zls",
+        "prerelease": false,
+        "asset": {
+          "windows": {
+            "x86_64": "zls-x86_64-windows.zip",
+            "x86": "zls-x86-windows.zip",
+            "arm64": "zls-aarch64-windows.zip"
+          },
+          "unix": {
+            "x86_64": "zls-x86_64-linux.tar.xz",
+            "arm64": "zls-aarch64-linux.tar.xz"
+          },
+          "mac": {
+            "x86_64": "zls-x86_64-macos.tar.xz",
+            "arm64": "zls-aarch64-macos.tar.xz"
+          }
+        }
+      },
+      "url": {
+        "windows": {
+          "x86_64": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-x86_64-windows.zip",
+          "x86": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-x86-windows.zip",
+          "arm64": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-aarch64-windows.zip"
+        },
+        "unix": {
+          "x86_64": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-x86_64-linux.tar.xz",
+          "arm64": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-aarch64-linux.tar.xz"
+        },
+        "mac": {
+          "x86_64": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-x86_64-macos.tar.xz",
+          "arm64": "https://github.com/zigtools/zls/releases/download/0.17.0/zls-aarch64-macos.tar.xz"
+        }
+      },
+      "output": {
+        "dir": "${serverDist}",
+        "file": {
+          "name": {
+            "windows": "zls.exe",
+            "unix": "zls",
+            "mac": "zls"
+          },
+          "executable": true
+        }
+      },
+      "onSuccess": {
+        "configureServer": {
+          "name": "Configure zls command",
+          "command": "\"${output.dir}/${output.file.name}\"",
+          "update": true
+        }
+      }
+    }
+  }
+}

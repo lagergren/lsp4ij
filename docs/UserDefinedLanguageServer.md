@@ -477,6 +477,7 @@ and potential configuration.
 * [TypeScript Language Server](./user-defined-ls/typescript-language-server.md)
 * [Vue.js Language Server](./user-defined-ls/vue-js-language-server.md)
 * [WGSL Analyzer](./user-defined-ls/wgsl-analyzer.md)
+* [Zig Language Server (ZLS)](./user-defined-ls/zls.md)
 
 If the template directory contains a `README.md` file, you can open the instructions by pressing the help icon: the
 dialog shows that button only for a template with a `README.md`. The `Server` tab also links the page of the template,
