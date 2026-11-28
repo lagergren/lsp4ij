@@ -25,6 +25,7 @@ import com.redhat.devtools.lsp4ij.features.semanticTokens.inspector.SemanticToke
 import com.redhat.devtools.lsp4ij.features.semanticTokens.inspector.SemanticTokensInspectorData;
 import com.redhat.devtools.lsp4ij.features.semanticTokens.inspector.SemanticTokensInspectorManager;
 import com.redhat.devtools.lsp4ij.features.semanticTokens.viewProvider.LSPSemanticTokensFileViewProvider;
+import org.eclipse.lsp4j.SemanticTokenModifiers;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.jetbrains.annotations.ApiStatus;
@@ -207,6 +208,11 @@ public class SemanticTokensData {
                         TextAttributesKey colorKey = tokenType != null ? semanticTokensColorsProvider.getTextAttributesKey(tokenType, tokenModifiers, file) : null;
                         if (colorKey != null) {
                             addInfo.accept(start, end, colorKey);
+                        }
+                        if (tokenModifiers.contains(SemanticTokenModifiers.Deprecated)) {
+                            // A deprecated token is struck through, as IntelliJ shows a deprecated symbol, whatever
+                            // its color
+                            addInfo.acceptDeprecated(start, end);
                         }
 
                         if (semanticTokensFileViewProvider != null) {

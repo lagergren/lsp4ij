@@ -14,6 +14,8 @@ package com.redhat.devtools.lsp4ij.features.semanticTokens;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -146,16 +148,16 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
         }
         int end = start + element.getTextLength();
         for (int i = start; i < end && i < lazyInfos.length; i++) {
-            var info = lazyInfos[i];
-            if (info != null) {
+            // The highlights of the token at this offset: its color, and the strikethrough of a deprecated token
+            for (var info = lazyInfos[i]; info != null; info = info.next()) {
                 // resolve() returns null when the stored end offset is invalid (defensive
                 // guard for the rare race described in the class Javadoc). Skip silently.
                 var highlight = info.resolve(i);
                 if (highlight != null) {
                     holder.add(highlight);
                 }
-                lazyInfos[i] = null;
             }
+            lazyInfos[i] = null;
         }
     }
 
@@ -322,12 +324,23 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
             // rejects out-of-bounds tokens, and the bounds check below covers the
             // remaining window between that snapshot and the array allocation.
             var infos = new LazyHighlightInfo[document.getTextLength()];
-            result.data().highlight(file, document, result.tokensText(), (start, end, colorKey) -> {
-                // SemanticTokensData validated start/end against its own docLength
-                // snapshot. This guard covers the window between that snapshot and the
-                // infos[] allocation above.
-                if (start < infos.length && end <= infos.length) {
-                    infos[start] = new LazyHighlightInfo(end, colorKey);
+            result.data().highlight(file, document, result.tokensText(), new LazyHighlightInfo.Consumer() {
+                @Override
+                public void accept(int start, int end, TextAttributesKey colorKey) {
+                    // SemanticTokensData validated start/end against its own docLength
+                    // snapshot. This guard covers the window between that snapshot and the
+                    // infos[] allocation above.
+                    if (start < infos.length && end <= infos.length) {
+                        infos[start] = new LazyHighlightInfo(end, colorKey);
+                    }
+                }
+
+                @Override
+                public void acceptDeprecated(int start, int end) {
+                    if (start < infos.length && end <= infos.length) {
+                        // The strikethrough of the token of this offset, which keeps its color
+                        infos[start] = new LazyHighlightInfo(end, CodeInsightColors.DEPRECATED_ATTRIBUTES, infos[start]);
+                    }
                 }
             });
             return infos;

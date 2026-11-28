@@ -11,17 +11,40 @@
 package com.redhat.devtools.lsp4ij.features.semanticTokens;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeHighlighting.RainbowHighlighter.RAINBOW_ELEMENT;
 
-public record LazyHighlightInfo(int end, TextAttributesKey colorKey) {
+/**
+ * A semantic token highlight to create, from its start offset, which the highlighting gives when it visits the PSI
+ * element of that offset.
+ *
+ * @param end      the end offset (exclusive)
+ * @param colorKey the text attributes key to apply
+ * @param next     the next highlight of the same range, such as the strikethrough of a deprecated token, or null
+ */
+public record LazyHighlightInfo(int end, TextAttributesKey colorKey, @Nullable LazyHighlightInfo next) {
+
+    public LazyHighlightInfo(int end, TextAttributesKey colorKey) {
+        this(end, colorKey, null);
+    }
 
     @FunctionalInterface
     public interface Consumer {
         void accept(int start, int end, TextAttributesKey colorKey);
+
+        /**
+         * Accepts the strikethrough of a deprecated token, after its color, if any.
+         *
+         * @param start the start offset (inclusive)
+         * @param end   the end offset (exclusive)
+         */
+        default void acceptDeprecated(int start, int end) {
+            accept(start, end, CodeInsightColors.DEPRECATED_ATTRIBUTES);
+        }
     }
 
     public @Nullable HighlightInfo resolve(int start) {
