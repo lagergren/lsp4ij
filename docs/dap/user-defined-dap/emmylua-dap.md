@@ -40,7 +40,8 @@ adapter connects to.
 The first time the DAP server starts, the installer downloads the archive of your OS and CPU from the latest
 [emmylua_dap release](https://github.com/EmmyLuaLs/emmylua_dap/releases), extracts it into
 `$USER_HOME$/.lsp4ij/dap/emmylua-dap`, and sets the command to `"$USER_HOME$/.lsp4ij/dap/emmylua-dap/emmylua_dap"`.
-If GitHub can't be reached, it downloads emmylua_dap 0.5.0 instead.
+When the GitHub API gives no release, as when its rate limit is reached, it downloads emmylua_dap 0.5.0, see
+[GitHub API rate limit](../../Installer.md#github-api-rate-limit).
 
 To install emmylua_dap yourself, extract the archive of a release into a folder of your choice, set the command to the
 `emmylua_dap` in it, and empty the `Installer` tab, so that LSP4IJ doesn't install the DAP server.

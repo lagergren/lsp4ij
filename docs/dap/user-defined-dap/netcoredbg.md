@@ -23,9 +23,10 @@ on that port instead.
 The first time the DAP server starts, the installer downloads the archive of your OS and CPU from the latest
 [netcoredbg release](https://github.com/Samsung/netcoredbg/releases), extracts it into
 `$USER_HOME$/.lsp4ij/dap/netcoredbg`, and sets the command to
-`"$USER_HOME$/.lsp4ij/dap/netcoredbg/netcoredbg" --interpreter=vscode`. If GitHub can't be reached, it downloads
-netcoredbg 3.2.0 instead. On a Mac with an Intel CPU, it downloads netcoredbg 3.1.3, since 3.2.0 has no build for
-it.
+`"$USER_HOME$/.lsp4ij/dap/netcoredbg/netcoredbg" --interpreter=vscode`. When the GitHub API gives no release, as
+when its rate limit is reached, it downloads netcoredbg 3.2.0, see
+[GitHub API rate limit](../../Installer.md#github-api-rate-limit). On a Mac with an Intel CPU, it downloads
+netcoredbg 3.1.3, since 3.2.0 has no build for it.
 
 To install netcoredbg yourself, extract the archive of a release into a folder of your choice, set the command to the
 `netcoredbg` in it followed by `--interpreter=vscode`, and empty the `Installer` tab, so that LSP4IJ doesn't install the
