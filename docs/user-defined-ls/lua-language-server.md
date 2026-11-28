@@ -33,14 +33,17 @@ assets which the installer selects are:
 | Windows | x64 and arm64 | `lua-language-server-<version>-win32-x64.zip`       |
 | Windows | x86           | `lua-language-server-<version>-win32-ia32.zip`      |
 
-LuaLS has no build for Windows on Arm, which runs the x64 one. When GitHub can't be reached, or its rate limit is
-reached, the installer downloads the same asset of LuaLS 3.19.2, see
-[GitHub API rate limit](../Installer.md#github-api-rate-limit).
+LuaLS has no build for Windows on Arm, which runs the x64 one. When the GitHub API gives no release, as when its rate
+limit is reached, the installer downloads the same asset of LuaLS 3.19.2, see
+[GitHub API rate limit](../Installer.md#github-api-rate-limit). That download comes from github.com too: where
+github.com can't be reached, install LuaLS yourself and put `lua-language-server` on your PATH.
 
 ## Settings
 
 The `Configuration` tab holds the settings that LuaLS asks for, in its `Lua` section, with their list and descriptions
-in the tab's schema. The template sets:
+in the tab's schema, which is made from the settings that the VS Code extension of LuaLS,
+[LuaLS/vscode-lua](https://github.com/LuaLS/vscode-lua), declares in its `package.json`, with the descriptions of its
+`package.nls.json`. The template sets:
 
 * `Lua.runtime.version` to `Lua 5.4`, LuaLS's default. Set the version of your Lua, such as `LuaJIT` or `Lua 5.1`.
 * `Lua.hint.enable` to `true`, so that the editor shows the inlay hints of LuaLS.

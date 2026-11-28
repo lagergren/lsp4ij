@@ -35,8 +35,9 @@ which the installer selects are:
 | Windows | x86           | `zls-x86-windows.zip`      |
 | Windows | arm64         | `zls-aarch64-windows.zip`  |
 
-When GitHub can't be reached, or its rate limit is reached, the installer downloads the same asset of ZLS 0.17.0, see
-[GitHub API rate limit](../Installer.md#github-api-rate-limit).
+When the GitHub API gives no release, as when its rate limit is reached, the installer downloads the same asset of
+ZLS 0.17.0, see [GitHub API rate limit](../Installer.md#github-api-rate-limit). That download comes from github.com
+too: where github.com can't be reached, install ZLS yourself and put `zls` on your PATH.
 
 ## Use the ZLS of your Zig
 
