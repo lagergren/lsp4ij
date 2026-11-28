@@ -184,7 +184,29 @@ declaration renames all three to `subtotal`, and one undo reverts them together.
 
 ## Semantic Tokens support
 
-LSP4IJ provides **experimental**  support for [LSP Semantic Tokens](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens).
+LSP4IJ supports [LSP Semantic Tokens](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens):
+the colors that a language server gives to the tokens of a file, such as a function, a parameter or a deprecated symbol,
+on top of the colors of the file's own highlighting (TextMate, or the highlighting of a plugin's language).
+
+ * The colors stay while the language server computes new ones, and when it answers with an error or cancels the request:
+a file doesn't lose its colors because its language server is busy or can't parse it for a moment. A cancelled request
+is asked again by the next highlighting, and one answered with an error by the next edit of the file.
+ * A `workspace/semanticTokens/refresh` of the language server shows its new colors within 300 ms, without an edit.
+ * A language server that has semantic tokens for a range only, and not for the whole file, gets a range request for the
+whole file.
+ * With several language servers that have semantic tokens for a file, the file shows the colors of one of them: the
+first in the order of their mappings which has some. If a language server before it fails, the file keeps its colors.
+
+What is not supported yet:
+
+ * `textDocument/semanticTokens/full/delta` ([#2239](https://github.com/redhat-developer/lsp4ij/issues/2239)): the
+whole file is asked for each time.
+ * Asking for the visible range only ([#2240](https://github.com/redhat-developer/lsp4ij/issues/2240)), and partial results
+([#2244](https://github.com/redhat-developer/lsp4ij/issues/2244)).
+ * Custom token types and modifiers of a language server: only `label`, TypeScript's `member` and SourceKit's `identifier`
+are colored. A plugin can color others with its own [colors provider](./DeveloperGuide.md#semantic-tokens-colors-provider);
+a user-defined language server can't yet ([#871](https://github.com/redhat-developer/lsp4ij/issues/871)).
+ * Merging the tokens of several language servers of a file.
 
 ### Language Server coloration
 
@@ -214,7 +236,7 @@ that you can select in the left panel via the checkboxes:
 If the `Semantic Tokens` doesn't show the expected result, please check that:
 
  * show in the [LSP console](#lsp-console) that your language server reports 
-LSP request `textDocument/semanticTokens/full`
+LSP request `textDocument/semanticTokens/full` (or `textDocument/semanticTokens/range`)
  * uses the [Semantic Tokens Inspector](#semantic-tokens-inspector) to understand more how the 
 file content is tokenized. Problem could come if LSP4IJ doesn't support some token types / modifiers.
 

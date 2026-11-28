@@ -63,7 +63,8 @@ Current state of [Language Features]( https://microsoft.github.io/language-serve
  * ✅ [workspace/foldingRange/refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#workspace_foldingRange_refresh) (LSP 3.18).
  * ✅ [textDocument/selectionRange](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_selectionRange)  (see [implementation details](#selection-range))
  * ✅ [textDocument/documentSymbol](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol) (see [implementation details](#document-symbol))
- * ✅ [textDocument/semanticTokens (experimental)](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens) (see [implementation details](#semantic-tokens))
+ * ✅ [textDocument/semanticTokens](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens) (see [implementation details](#semantic-tokens))
+ * ✅ [workspace/semanticTokens/refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokens_refreshRequest).
  * ✅ [textDocument/inlineValue](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_inlineValue) (see [implementation details](#inline-value)).
  * ✅ [workspace/inlineValue/refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_inlineValue_refresh).
  * ❌ [textDocument/moniker](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_moniker).
@@ -783,7 +784,29 @@ Before you start reading this section, please read the [User Guide](UserGuide.md
 
 The semantic tokens support:
 
- * uses only [textDocument/semanticTokens/full](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokens_fullRequest) LSP request.
+ * uses the [textDocument/semanticTokens/full](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokens_fullRequest) LSP request,
+and [textDocument/semanticTokens/range](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokens_rangeRequest),
+for the range of the whole file, with a language server that has semantic tokens for a range only.
+ * declares the standard token types (and `label`), the ten standard token modifiers, `multilineTokenSupport`,
+`serverCancelSupport` and the `relative` format in the client capabilities.
+ * sends a request that the language server cancels itself (`ServerCancelled`), or answers with `ContentModified`, again,
+after 100, 200 and 400 ms: at most three times.
+ * keeps the colors that a file shows when a request fails, is cancelled, or isn't answered yet: an error of the language
+server, or a cancellation, doesn't remove them. The next highlighting pass asks again for a cancelled request; a request
+that the language server answered with an error is kept until the file changes, so that its error isn't reported again
+at each restart of the highlighting. If the file has changed since the colors were computed, a token keeps its color
+only if its text hasn't changed and doesn't touch a change: typing next to an identifier changes the identifier.
+ * applies a [workspace/semanticTokens/refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokens_refreshRequest)
+within 300 ms: the highlighting of the files of the language server restarts then, and the refreshes of other features
+don't postpone it.
+ * shows, for a file with several language servers that have semantic tokens, the tokens of the first one, in the order
+of the mappings of their definitions, which answers with semantic tokens (as VS Code shows those of one provider): an
+answer with no tokens, null or an empty list, lets the next one's be used. When a language server before it gives no
+answer, or answers with an error, the file keeps the colors it shows, as VS Code does, instead of taking those of a later
+language server. The tokens of several language servers are not merged.
+ * strikes through a token with the modifier `deprecated`, on top of its color.
+ * waits for the answer of the language server in the highlighting pass, which a write action interrupts, as for other
+features: the pass runs again once the write action is done (see [#2017](https://github.com/redhat-developer/lsp4ij/issues/2017)).
  * uses the [IntelliJ Semantic Highlighting support](https://plugins.jetbrains.com/docs/intellij/syntax-highlighting-and-error-highlighting.html#semantic-highlighting) 
 by implementing [HighlightVisitor](https://github.com/JetBrains/intellij-community/blob/master/platform/analysis-impl/src/com/intellij/codeInsight/daemon/impl/HighlightVisitor.java)
 with the [LSPSemanticTokensHighlightVisitor](https://github.com/redhat-developer/lsp4ij/blob/main/src/main/java/com/redhat/devtools/lsp4ij/features/semanticTokens/LSPSemanticTokensHighlightVisitor.java) class.
@@ -842,6 +865,9 @@ The following table lists the currently predefined mappings:
 | regexp               |                         | REGEXP                           | VALID_STRING_ESCAPE                               |
 | modifier             |                         | MODIFIER                         | KEYWORD                                           |
 | operator             |                         | OPERATOR                         | OPERATION_SIGN                                    |
+
+Of the token modifiers, `declaration`, `definition`, `static`, `readonly` and `defaultLibrary` change the color as the table
+shows, and `deprecated` strikes the token through; the others don't change it.
 
 If you need other mapping:
 

@@ -115,10 +115,10 @@ public class LSPSemanticTokensFeature extends AbstractLSPDocumentFeature impleme
      * This method controls whether the semantic tokens logic should traverse PSI elements
      * using the IntelliJ {@link com.intellij.codeInsight.daemon.impl.HighlightVisitor#visit(PsiElement)} API.
      * <p>
-     * * The default implementation returns {@code true} only for files whose language does not provide
-     * * built-in PSI-based syntax highlighting, such as those handled by TextMate or PlainText support.
-     * * For such files, semantic tokens from the language server can provide the primary source of highlighting.
-     * * <p>
+     * The default implementation returns {@code true} for files whose language has PSI elements of its own, such as
+     * the language of a plugin, whose highlights are added per PSI element, and {@code false} for TextMate and plain
+     * text files, whose highlights are added for the whole file at once.
+     * <p>
      * Subclasses may override this method to enable or disable traversal for specific file types.
      *
      * @param file the PSI file.

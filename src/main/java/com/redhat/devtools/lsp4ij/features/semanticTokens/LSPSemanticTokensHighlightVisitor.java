@@ -299,7 +299,7 @@ public class LSPSemanticTokensHighlightVisitor implements HighlightVisitor {
         // Secondary staleness check: cancel the entire pass if the document changed
         // between getSemanticTokens() and now. Applying tokens from a previous document
         // version would produce inverted or out-of-bounds offsets and cause
-        // IllegalArgumentException inside HighlightInfo (see issue #XXX).
+        // IllegalArgumentException inside HighlightInfo (see issue #1440).
         if (file.getModificationStamp() != result.modificationStamp()) {
             return null;
         }
