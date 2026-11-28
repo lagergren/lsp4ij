@@ -817,7 +817,7 @@ The following table lists the currently predefined mappings:
 | variable             | static + readonly       | STATIC_READONLY_VARIABLE         | CONSTANT                                          |
 | variable             | static                  | STATIC_VARIABLE                  | STATIC_FIELD                                      |
 | variable             | readonly                | READONLY_VARIABLE                | LOCAL_VARIABLE                                    |
-| variable             |                         | VARIABLE                         | REASSIGNED_LOCAL_VARIABLE                         |
+| variable             |                         | VARIABLE                         | LOCAL_VARIABLE                                    |
 | property             | static + readonly       | STATIC_READONLY_PROPERTY         | CONSTANT                                          |
 | property             | static                  | STATIC_PROPERTY                  | STATIC_FIELD                                      |
 | property             | readonly                | READONLY_PROPERTY                | INSTANCE_FIELD                                    |

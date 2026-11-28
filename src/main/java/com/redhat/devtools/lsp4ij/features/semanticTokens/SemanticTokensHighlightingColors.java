@@ -48,7 +48,9 @@ public class SemanticTokensHighlightingColors {
     public static final TextAttributesKey STATIC_VARIABLE = TextAttributesKey.createTextAttributesKey("LSP_STATIC_VARIABLE", DefaultLanguageHighlighterColors.STATIC_FIELD);
     public static final TextAttributesKey STATIC_READONLY_VARIABLE = TextAttributesKey.createTextAttributesKey("LSP_STATIC_READONLY_VARIABLE", DefaultLanguageHighlighterColors.CONSTANT);
     public static final TextAttributesKey READONLY_VARIABLE = TextAttributesKey.createTextAttributesKey("LSP_READONLY_VARIABLE", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
-    public static final TextAttributesKey VARIABLE = TextAttributesKey.createTextAttributesKey("LSP_VARIABLE", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
+    // Not REASSIGNED_LOCAL_VARIABLE, which IntelliJ's schemes underline, for a local variable that is assigned more than
+    // once: a variable without the modifier readonly isn't one
+    public static final TextAttributesKey VARIABLE = TextAttributesKey.createTextAttributesKey("LSP_VARIABLE", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
 
     // property
     public static final TextAttributesKey STATIC_PROPERTY = TextAttributesKey.createTextAttributesKey("LSP_STATIC_PROPERTY", DefaultLanguageHighlighterColors.STATIC_FIELD);
