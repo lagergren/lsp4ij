@@ -18,6 +18,8 @@ import static com.redhat.devtools.lsp4ij.templates.ServerTemplate.TEMPLATE_FILE_
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +86,12 @@ public class DAPTemplateManager extends ServerTemplateManager<DAPTemplate> {
             String installerJson = null;
             List<LaunchConfiguration> launchConfigurations = new ArrayList<>();
 
-            for (VirtualFile file : templateFolder.getChildren()) {
+            // In the order of their names, whatever the order of the children: the New Debug Adapter Server dialog
+            // fills the first launch configuration and the first attach configuration of the template
+            List<VirtualFile> files = Arrays.stream(templateFolder.getChildren())
+                    .sorted(Comparator.comparing(VirtualFile::getName))
+                    .toList();
+            for (VirtualFile file : files) {
                 if (file.isDirectory()) {
                     continue;
                 }

@@ -11,12 +11,16 @@
 package com.redhat.devtools.lsp4ij.dap.descriptors.templates;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.redhat.devtools.lsp4ij.dap.DebugMode;
 import com.redhat.devtools.lsp4ij.dap.LaunchConfiguration;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -81,6 +85,26 @@ public class BundledDebugAdapterTemplatesTest extends BasePlatformTestCase {
         assertTrue(template.getOSProgramArgs(), template.getOSProgramArgs().endsWith(" -m debugpy.adapter"));
         assertEquals(List.of("Launch Python file"), names(template, DebugMode.LAUNCH));
         assertEquals(List.of("Attach"), names(template, DebugMode.ATTACH));
+    }
+
+    /**
+     * The launch configurations of a template are in the order of their file names, whatever the order of the files
+     * in its folder, since the New Debug Adapter Server dialog fills the first one of each debug mode.
+     */
+    public void testTheConfigurationsOfATemplateAreInTheOrderOfTheirFileNames() throws IOException {
+        VirtualFile folder = myFixture.getTempDirFixture().findOrCreateDir("template");
+        for (String name : List.of("launch.web.json", "attach.json", "launch.js.json", "template.json")) {
+            String json = name.equals("template.json")
+                    ? "{\"id\": \"ordered\", \"name\": \"Ordered\"}"
+                    : "{\"name\": \"" + name + "\"}";
+            WriteAction.runAndWait(() -> VfsUtil.saveText(folder.createChildData(this, name), json));
+        }
+
+        DAPTemplate template = DAPTemplateManager.getInstance().createDapTemplate(folder);
+
+        assertNotNull(template);
+        assertEquals(List.of("launch.js.json", "launch.web.json"), names(template, DebugMode.LAUNCH));
+        assertEquals(List.of("attach.json"), names(template, DebugMode.ATTACH));
     }
 
     private static @NotNull DAPTemplate template(@NotNull String id) {
